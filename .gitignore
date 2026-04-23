@@ -1,0 +1,46 @@
+# =========================
+# Backend (Spring Boot / Maven)
+# =========================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+*.war
+
+# =========================
+# Frontend (Angular / Node)
+# =========================
+node_modules/
+dist/
+tmp/
+out-tsc/
+.angular/
+
+# =========================
+# IDEs & Editors
+# =========================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# =========================
+# Operating System
+# =========================
+.DS_Store
+Thumbs.db

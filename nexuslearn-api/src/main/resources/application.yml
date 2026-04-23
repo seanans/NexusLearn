@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: nexuslearn-api
+
+  # PostgreSQL Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/classroom_db
+    username: admin
+    password: rootpassword
+    driver-class-name: org.postgresql.Driver
+
+  # JPA & Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Flyway Migration Configuration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # Docker Compose Auto-Start
+  docker:
+    compose:
+      file: ./compose.yaml
+      lifecycle-management: start-only
+
+server:
+  port: 8080
