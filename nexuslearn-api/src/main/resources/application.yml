@@ -37,3 +37,12 @@ spring:
 
 server:
   port: 8080
+
+app:
+  jwt:
+    # Local development jwt
+    secret: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+    # Access token: 15 minutes (900000 ms)
+    expiration-ms: 900000
+    # Refresh token: 7 days (604800000 ms)
+    refresh-expiration-ms: 604800000
