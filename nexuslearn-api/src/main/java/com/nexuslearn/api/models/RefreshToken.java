@@ -14,7 +14,7 @@ import java.time.Instant;
 @Builder
 public class RefreshToken extends BaseEntity {
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
