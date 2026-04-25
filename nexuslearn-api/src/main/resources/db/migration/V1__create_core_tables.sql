@@ -13,11 +13,13 @@ CREATE TABLE users
 
 CREATE TABLE courses
 (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title       VARCHAR(255) NOT NULL,
-    description TEXT,
-    created_at  TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP        DEFAULT CURRENT_TIMESTAMP
+    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title                 VARCHAR(255) NOT NULL,
+    description           TEXT,
+    created_at            TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
+    updated_at            TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
+    last_activity_message VARCHAR(255),
+    last_activity_at      TIMESTAMP
 );
 
 CREATE TABLE course_members

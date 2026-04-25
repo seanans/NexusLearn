@@ -11,13 +11,13 @@ import com.nexuslearn.api.repositories.CourseMemberRepository;
 import com.nexuslearn.api.repositories.CourseRepository;
 import com.nexuslearn.api.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,14 +31,15 @@ public class CourseService {
 
         User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
 
-        Course course = Course.builder().title(request.getTitle()).description(request.getDescription()).build();
+        Course course = Course.builder().title(request.getTitle()).description(request.getDescription()).lastActivityMessage("Course created").lastActivityAt(java.time.LocalDateTime.now()).build();
+
         course = courseRepository.save(course);
 
         CourseMemberId memberId = new CourseMemberId(user.getId(), course.getId());
         CourseMember courseMember = CourseMember.builder().id(memberId).user(user).course(course).role("TEACHER").build();
         courseMemberRepository.save(courseMember);
 
-        return mapToResponse(course, user);
+        return CourseResponse.builder().id(course.getId()).title(course.getTitle()).description(course.getDescription()).creatorName(user.getFirstName() + " " + user.getLastName()).lastActivityMessage(course.getLastActivityMessage()).lastActivityAt(course.getLastActivityAt()).build();
     }
 
     @Transactional
@@ -68,11 +69,9 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public List<CourseResponse> getAllCourses() {
-        return courseRepository.findAll().stream().map(course -> mapToResponse(course, null)).collect(Collectors.toList());
-    }
+    public Slice<CourseResponse> getMyCourses(String email, Pageable pageable) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
 
-    private CourseResponse mapToResponse(Course course, User creator) {
-        return CourseResponse.builder().id(course.getId()).title(course.getTitle()).description(course.getDescription()).creatorName(creator != null ? creator.getFirstName() + " " + creator.getLastName() : "Unknown").build();
+        return courseRepository.findDashboardCourses(user.getId(), pageable).map(proj -> CourseResponse.builder().id(proj.getId()).title(proj.getTitle()).description(proj.getDescription()).lastActivityMessage(proj.getLastActivityMessage()).lastActivityAt(proj.getLastActivityAt()).creatorName(proj.getTeacherFirstName() != null ? proj.getTeacherFirstName() + " " + proj.getTeacherLastName() : "No Teacher Assigned").build());
     }
 }

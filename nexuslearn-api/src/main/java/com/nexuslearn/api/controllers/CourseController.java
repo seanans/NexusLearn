@@ -7,12 +7,13 @@ import com.nexuslearn.api.dtos.MessageResponse;
 import com.nexuslearn.api.services.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -35,9 +36,9 @@ public class CourseController {
         return ResponseEntity.ok(new MessageResponse("Member successfully added to course"));
     }
 
-
-    @GetMapping
-    public ResponseEntity<List<CourseResponse>> getAllCourses() {
-        return ResponseEntity.ok(courseService.getAllCourses());
+    @GetMapping("/me")
+    public ResponseEntity<Slice<CourseResponse>> getMyCourses(Authentication authentication, Pageable pageable) {
+        Slice<CourseResponse> courses = courseService.getMyCourses(authentication.getName(), pageable);
+        return ResponseEntity.ok(courses);
     }
 }
