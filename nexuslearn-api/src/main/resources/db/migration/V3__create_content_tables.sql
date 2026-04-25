@@ -45,7 +45,8 @@ CREATE TABLE assignment_submissions
     submission_text TEXT,
     score           INT,
     feedback        TEXT,
-    submitted_at    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
+    created_at      TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT unique_user_assignment UNIQUE (assignment_id, user_id)
 );

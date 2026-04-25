@@ -28,8 +28,9 @@ public class CourseMember {
     @JoinColumn(name = "course_id")
     private Course course;
 
-    @Column(nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private CourseRole role;
 
     @CreationTimestamp
     @Column(name = "joined_at", updatable = false)

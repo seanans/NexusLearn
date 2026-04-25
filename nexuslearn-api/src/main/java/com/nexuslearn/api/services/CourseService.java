@@ -3,10 +3,7 @@ package com.nexuslearn.api.services;
 import com.nexuslearn.api.dtos.CourseCreateRequest;
 import com.nexuslearn.api.dtos.CourseResponse;
 import com.nexuslearn.api.exceptions.AppException;
-import com.nexuslearn.api.models.Course;
-import com.nexuslearn.api.models.CourseMember;
-import com.nexuslearn.api.models.CourseMemberId;
-import com.nexuslearn.api.models.User;
+import com.nexuslearn.api.models.*;
 import com.nexuslearn.api.repositories.CourseMemberRepository;
 import com.nexuslearn.api.repositories.CourseRepository;
 import com.nexuslearn.api.repositories.UserRepository;
@@ -36,14 +33,15 @@ public class CourseService {
         course = courseRepository.save(course);
 
         CourseMemberId memberId = new CourseMemberId(user.getId(), course.getId());
-        CourseMember courseMember = CourseMember.builder().id(memberId).user(user).course(course).role("TEACHER").build();
+        CourseMember courseMember = CourseMember.builder().id(memberId).user(user).course(course).role(CourseRole.TEACHER).build();
         courseMemberRepository.save(courseMember);
 
         return CourseResponse.builder().id(course.getId()).title(course.getTitle()).description(course.getDescription()).creatorName(user.getFirstName() + " " + user.getLastName()).lastActivityMessage(course.getLastActivityMessage()).lastActivityAt(course.getLastActivityAt()).build();
     }
 
     @Transactional
-    public void addMemberToCourse(UUID courseId, String targetEmail, String role, String requesterEmail) {
+    public void addMemberToCourse(UUID courseId, String targetEmail, CourseRole role, String requesterEmail) {
+
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new AppException("Course not found", HttpStatus.NOT_FOUND));
 
         User requester = userRepository.findByEmail(requesterEmail).orElseThrow(() -> new AppException("Requester not found", HttpStatus.NOT_FOUND));
@@ -51,7 +49,7 @@ public class CourseService {
         CourseMemberId requesterMemberId = new CourseMemberId(requester.getId(), course.getId());
         CourseMember requesterMember = courseMemberRepository.findById(requesterMemberId).orElseThrow(() -> new AppException("Access Denied: You are not a member of this course", HttpStatus.FORBIDDEN));
 
-        if (!"TEACHER".equalsIgnoreCase(requesterMember.getRole())) {
+        if (CourseRole.TEACHER != requesterMember.getRole()) {
             throw new AppException("Access Denied: Only teachers can add new members to this course", HttpStatus.FORBIDDEN);
         }
 
@@ -63,8 +61,7 @@ public class CourseService {
             throw new AppException("User is already a member of this course", HttpStatus.CONFLICT);
         }
 
-        CourseMember newMember = CourseMember.builder().id(targetMemberId).user(targetUser).course(course).role(role.toUpperCase()).build();
-
+        CourseMember newMember = CourseMember.builder().id(targetMemberId).user(targetUser).course(course).role(role).build();
         courseMemberRepository.save(newMember);
     }
 

@@ -1,7 +1,9 @@
 package com.nexuslearn.api.dtos;
 
+import com.nexuslearn.api.models.CourseRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,6 +15,6 @@ public class AddMemberToCourseRequest {
     @NotBlank
     @Email
     private String email;
-    @NotBlank(message = "Role is required")
-    private String role;
+    @NotNull(message = "Role is required")
+    private CourseRole role;
 }
