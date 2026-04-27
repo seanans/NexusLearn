@@ -10,7 +10,7 @@ import com.nexuslearn.api.models.User;
 import com.nexuslearn.api.repositories.UserRepository;
 import com.nexuslearn.api.security.CustomUserDetails;
 import com.nexuslearn.api.security.JwtTokenProvider;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
