@@ -13,6 +13,7 @@ import java.util.UUID;
 @Repository
 public interface ModuleRepository extends JpaRepository<Module, UUID> {
     List<ModuleSummaryProjection> findByCourseIdOrderByOrderIndexAsc(UUID courseId);
+    List<ModuleSummaryProjection> findByCourseIdAndIsPublishedTrueOrderByOrderIndexAsc(UUID courseId);
     @Query("SELECT COALESCE(MAX(m.orderIndex), 0) FROM Module m WHERE m.course.id = :courseId")
     Integer findMaxOrderIndexByCourseId(@Param("courseId") UUID courseId);
 }

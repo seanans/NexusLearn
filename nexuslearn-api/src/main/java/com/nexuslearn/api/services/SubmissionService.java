@@ -45,10 +45,9 @@ public class SubmissionService {
 
     @Transactional
     public SubmissionResponse gradeSubmission(UUID submissionId, SubmissionGradeRequest request, User user) {
-        AssignmentSubmission submission = submissionRepository.findById(submissionId).orElseThrow(() -> new AppException("Submission not found", HttpStatus.NOT_FOUND));
+        AssignmentSubmission submission = submissionRepository.findByIdWithCourseContext(submissionId).orElseThrow(() -> new AppException("Submission not found", HttpStatus.NOT_FOUND));
 
         Assignment assignment = submission.getAssignment();
-
         securityValidator.validateAccess(assignment.getModule().getCourse().getId(), user, true);
 
         if (request.getScore() > assignment.getMaxScore()) {
@@ -64,7 +63,7 @@ public class SubmissionService {
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsForAssignment(UUID assignmentId, User user) {
-        Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
 
         CourseRole userRole = securityValidator.getUserRoleInCourse(assignment.getModule().getCourse().getId(), user);
 
@@ -81,15 +80,6 @@ public class SubmissionService {
         LocalDateTime evaluationTime = submission.getUpdatedAt() != null ? submission.getUpdatedAt() : LocalDateTime.now();
         boolean isLate = evaluationTime.isAfter(submission.getAssignment().getDueDate());
 
-        return SubmissionResponse.builder()
-                .id(submission.getId())
-                .assignmentId(submission.getAssignment().getId())
-                .userId(submission.getUser().getId())
-                .submissionText(submission.getSubmissionText())
-                .score(submission.getScore())
-                .feedback(submission.getFeedback())
-                .submittedAt(submission.getUpdatedAt())
-                .isLate(isLate)
-                .build();
+        return SubmissionResponse.builder().id(submission.getId()).assignmentId(submission.getAssignment().getId()).userId(submission.getUser().getId()).submissionText(submission.getSubmissionText()).score(submission.getScore()).feedback(submission.getFeedback()).submittedAt(submission.getUpdatedAt()).isLate(isLate).build();
     }
 }

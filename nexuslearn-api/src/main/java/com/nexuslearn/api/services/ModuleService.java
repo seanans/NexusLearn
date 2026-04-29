@@ -4,6 +4,7 @@ import com.nexuslearn.api.dtos.ModuleCreateRequest;
 import com.nexuslearn.api.dtos.ModuleResponse;
 import com.nexuslearn.api.dtos.ModuleSummaryProjection;
 import com.nexuslearn.api.models.Course;
+import com.nexuslearn.api.models.CourseRole;
 import com.nexuslearn.api.models.Module;
 import com.nexuslearn.api.models.User;
 import com.nexuslearn.api.repositories.CourseRepository;
@@ -40,7 +41,12 @@ public class ModuleService {
 
     @Transactional(readOnly = true)
     public List<ModuleSummaryProjection> getModulesByCourse(UUID courseId, User user) {
-        securityValidator.validateAccess(courseId, user, false);
-        return moduleRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
+        CourseRole role = securityValidator.getUserRoleInCourse(courseId, user);
+
+        if (role == CourseRole.TEACHER || role == CourseRole.ASSISTANT) {
+            return moduleRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
+        } else {
+            return moduleRepository.findByCourseIdAndIsPublishedTrueOrderByOrderIndexAsc(courseId);
+        }
     }
 }
