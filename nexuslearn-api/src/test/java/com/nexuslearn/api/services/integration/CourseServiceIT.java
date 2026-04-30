@@ -35,8 +35,6 @@ public class CourseServiceIT {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private CourseRepository courseRepository;
-    @Autowired
     private CourseMemberRepository courseMemberRepository;
 
     private User primaryTeacher;

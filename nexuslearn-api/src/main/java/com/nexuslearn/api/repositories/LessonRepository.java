@@ -18,12 +18,12 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
     Integer findMaxOrderIndexByModuleId(@Param("moduleId") UUID moduleId);
 
     @Query("""
-        SELECT l FROM Lesson l 
-        WHERE l.module.id = :moduleId 
-        AND l.isPublished = true 
-        AND l.module.isPublished = true 
+        SELECT l FROM Lesson l\s
+        WHERE l.module.id = :moduleId\s
+        AND l.isPublished = true\s
+        AND l.module.isPublished = true\s
         AND (l.availableFrom IS NULL OR l.availableFrom <= CURRENT_TIMESTAMP)
         ORDER BY l.orderIndex ASC
-    """)
+   \s""")
     List<LessonSummaryProjection> findVisibleLessonsForStudent(@Param("moduleId") UUID moduleId);
 }

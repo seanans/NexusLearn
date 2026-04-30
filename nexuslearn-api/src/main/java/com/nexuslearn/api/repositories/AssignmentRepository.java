@@ -17,13 +17,13 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
     List<AssignmentSummaryProjection> findByModuleIdOrderByOrderIndexAsc(UUID moduleId);
 
     @Query("""
-        SELECT a FROM Assignment a 
-        WHERE a.module.id = :moduleId 
-        AND a.isPublished = true 
-        AND a.module.isPublished = true 
+        SELECT a FROM Assignment a\s
+        WHERE a.module.id = :moduleId\s
+        AND a.isPublished = true\s
+        AND a.module.isPublished = true\s
         AND (a.availableFrom IS NULL OR a.availableFrom <= CURRENT_TIMESTAMP)
         ORDER BY a.orderIndex ASC
-    """)
+   \s""")
     List<AssignmentSummaryProjection> findVisibleAssignmentsForStudent(@Param("moduleId") UUID moduleId);
 
     @Query("SELECT COALESCE(MAX(a.orderIndex), 0) FROM Assignment a WHERE a.module.id = :moduleId")

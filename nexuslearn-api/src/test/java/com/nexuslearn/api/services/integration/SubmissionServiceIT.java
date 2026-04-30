@@ -133,7 +133,7 @@ public class SubmissionServiceIT {
         for (Future<Void> future : futures) {
             try {
                 future.get();
-            } catch (ExecutionException e) {
+            } catch (ExecutionException ignored) {
             }
         }
         executor.shutdown();
