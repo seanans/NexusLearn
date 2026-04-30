@@ -16,4 +16,14 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
 
     @Query("SELECT COALESCE(MAX(l.orderIndex), 0) FROM Lesson l WHERE l.module.id = :moduleId")
     Integer findMaxOrderIndexByModuleId(@Param("moduleId") UUID moduleId);
+
+    @Query("""
+        SELECT l FROM Lesson l 
+        WHERE l.module.id = :moduleId 
+        AND l.isPublished = true 
+        AND l.module.isPublished = true 
+        AND (l.availableFrom IS NULL OR l.availableFrom <= CURRENT_TIMESTAMP)
+        ORDER BY l.orderIndex ASC
+    """)
+    List<LessonSummaryProjection> findVisibleLessonsForStudent(@Param("moduleId") UUID moduleId);
 }

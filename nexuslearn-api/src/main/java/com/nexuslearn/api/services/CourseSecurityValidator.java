@@ -32,6 +32,6 @@ public class CourseSecurityValidator {
 
     public CourseRole getUserRoleInCourse(UUID courseId, User user) {
         CourseMemberId courseMemberId = new CourseMemberId(user.getId(), courseId);
-        return courseMemberRepository.getRoleById(courseMemberId).orElseThrow(() -> new AppException("You are not a member of this course", HttpStatus.FORBIDDEN));
+        return courseMemberRepository.getRoleById(courseId, user.getId()).orElseThrow(() -> new AppException("You are not a member of this course", HttpStatus.FORBIDDEN));
     }
 }

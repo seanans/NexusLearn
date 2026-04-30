@@ -2,7 +2,9 @@ package com.nexuslearn.api.services;
 
 import com.nexuslearn.api.dtos.LessonCreateRequest;
 import com.nexuslearn.api.dtos.LessonSummaryProjection;
+import com.nexuslearn.api.dtos.LessonUpdateRequest;
 import com.nexuslearn.api.exceptions.AppException;
+import com.nexuslearn.api.models.CourseRole;
 import com.nexuslearn.api.models.Lesson;
 import com.nexuslearn.api.models.Module;
 import com.nexuslearn.api.models.User;
@@ -31,18 +33,44 @@ public class LessonService {
 
         Integer nextOrderIndex = lessonRepository.findMaxOrderIndexByModuleId(moduleId) + 1;
 
-        Lesson lesson = Lesson.builder().module(module).title(request.getTitle()).content(request.getContent()).videoUrl(request.getVideoUrl()).orderIndex(nextOrderIndex).build();
+        Lesson lesson = Lesson.builder().module(module).title(request.getTitle()).content(request.getContent()).videoUrl(request.getVideoUrl()).orderIndex(nextOrderIndex).isPublished(request.getIsPublished() != null ? request.getIsPublished() : false).availableFrom(request.getAvailableFrom()).build();
 
         lessonRepository.save(lesson);
     }
 
+    @Transactional
+    public void updateLesson(UUID lessonId, LessonUpdateRequest request, User user) {
+        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow(() -> new AppException("Lesson not found", HttpStatus.NOT_FOUND));
+
+        securityValidator.validateAccess(lesson.getModule().getCourse().getId(), user, true);
+
+        lesson.setTitle(request.getTitle());
+        lesson.setContent(request.getContent());
+        lesson.setVideoUrl(request.getVideoUrl());
+        lesson.setIsPublished(request.getIsPublished() != null ? request.getIsPublished() : false);
+        lesson.setAvailableFrom(request.getAvailableFrom());
+
+        lessonRepository.save(lesson);
+    }
+
+    @Transactional
+    public void deleteLesson(UUID lessonId, User user) {
+        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow(() -> new AppException("Lesson not found", HttpStatus.NOT_FOUND));
+
+        securityValidator.validateAccess(lesson.getModule().getCourse().getId(), user, true);
+        lessonRepository.delete(lesson);
+    }
+
     @Transactional(readOnly = true)
     public List<LessonSummaryProjection> getLessonsByModule(UUID moduleId, User user) {
-        Module module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
+        Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
-        securityValidator.validateAccess(module.getCourse().getId(), user, false);
+        CourseRole userRole = securityValidator.getUserRoleInCourse(module.getCourse().getId(), user);
 
-        return lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
+        if (userRole == CourseRole.TEACHER || userRole == CourseRole.ASSISTANT) {
+            return lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
+        } else {
+            return lessonRepository.findVisibleLessonsForStudent(moduleId);
+        }
     }
 }

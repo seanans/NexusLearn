@@ -30,6 +30,7 @@ public class SubmissionService {
     @Transactional
     public SubmissionResponse submitAssignment(UUID assignmentId, SubmissionCreateRequest request, User user) {
         Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+
         CourseRole userRole = securityValidator.getUserRoleInCourse(assignment.getModule().getCourse().getId(), user);
         if (userRole == CourseRole.TEACHER || userRole == CourseRole.ASSISTANT) {
             throw new AppException("Teachers and Assistants cannot submit assignments", HttpStatus.BAD_REQUEST);
@@ -38,6 +39,9 @@ public class SubmissionService {
         AssignmentSubmission submission = submissionRepository.findByAssignmentIdAndUserId(assignmentId, user.getId()).orElseGet(() -> AssignmentSubmission.builder().assignment(assignment).user(user).build());
 
         submission.setSubmissionText(request.getSubmissionText());
+
+        submission.setScore(null);
+        submission.setFeedback(null);
 
         submission = submissionRepository.save(submission);
         return mapToResponse(submission);

@@ -2,8 +2,10 @@ package com.nexuslearn.api.services;
 
 import com.nexuslearn.api.dtos.AssignmentCreateRequest;
 import com.nexuslearn.api.dtos.AssignmentSummaryProjection;
+import com.nexuslearn.api.dtos.AssignmentUpdateRequest;
 import com.nexuslearn.api.exceptions.AppException;
 import com.nexuslearn.api.models.Assignment;
+import com.nexuslearn.api.models.CourseRole;
 import com.nexuslearn.api.models.Module;
 import com.nexuslearn.api.models.User;
 import com.nexuslearn.api.repositories.AssignmentRepository;
@@ -48,8 +50,36 @@ public class AssignmentService {
         Module module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
-        securityValidator.validateAccess(module.getCourse().getId(), user, false);
+        CourseRole userRole = securityValidator.getUserRoleInCourse(module.getCourse().getId(), user);
 
-        return assignmentRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
+        if (userRole == CourseRole.TEACHER || userRole == CourseRole.ASSISTANT) {
+            return assignmentRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
+        } else {
+            return assignmentRepository.findVisibleAssignmentsForStudent(moduleId);
+        }
+    }
+
+    @Transactional
+    public void updateAssignment(UUID assignmentId, AssignmentUpdateRequest request, User user) {
+        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId)
+                .orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+
+        securityValidator.validateAccess(assignment.getModule().getCourse().getId(), user, true);
+
+        assignment.setTitle(request.getTitle());
+        assignment.setDescription(request.getDescription());
+        assignment.setMaxScore(request.getMaxScore());
+        assignment.setDueDate(request.getDueDate());
+
+        assignmentRepository.save(assignment);
+    }
+
+    @Transactional
+    public void deleteAssignment(UUID assignmentId, User user) {
+        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId)
+                .orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+
+        securityValidator.validateAccess(assignment.getModule().getCourse().getId(), user, true);
+        assignmentRepository.delete(assignment);
     }
 }
