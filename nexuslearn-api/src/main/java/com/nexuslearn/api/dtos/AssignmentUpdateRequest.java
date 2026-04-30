@@ -11,10 +11,9 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class AssignmentCreateRequest {
+public class AssignmentUpdateRequest {
     @NotBlank(message = "Assignment title is required")
     private String title;
-
     private String description;
 
     @NotNull(message = "Max score is required")
@@ -24,8 +23,4 @@ public class AssignmentCreateRequest {
     @NotNull(message = "Due date is required")
     @Future(message = "Due date must be in the future")
     private LocalDateTime dueDate;
-
-    private Boolean isPublished = false;
-
-    private LocalDateTime availableFrom;
 }

@@ -31,6 +31,12 @@ public class Assignment extends BaseEntity {
     @Column(name = "due_date", nullable = false)
     private LocalDateTime dueDate;
 
+    @Column(name = "is_published", nullable = false)
+    private Boolean isPublished = false;
+
+    @Column(name = "available_from")
+    private LocalDateTime availableFrom;
+
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 

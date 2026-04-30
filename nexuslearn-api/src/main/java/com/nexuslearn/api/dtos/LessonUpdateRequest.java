@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class LessonCreateRequest {
+public class LessonUpdateRequest {
     @NotBlank(message = "Lesson title is required")
     private String title;
     private String content;

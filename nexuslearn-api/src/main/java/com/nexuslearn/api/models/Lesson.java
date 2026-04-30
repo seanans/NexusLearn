@@ -3,6 +3,8 @@ package com.nexuslearn.api.models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "lessons")
 @Getter
@@ -26,4 +28,10 @@ public class Lesson extends BaseEntity {
 
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
+
+    @Column(name = "is_published", nullable = false)
+    private Boolean isPublished = false;
+
+    @Column(name = "available_from")
+    private LocalDateTime availableFrom;
 }
