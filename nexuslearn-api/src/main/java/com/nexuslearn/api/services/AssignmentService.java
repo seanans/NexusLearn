@@ -28,27 +28,28 @@ public class AssignmentService {
 
     @Transactional
     public void createAssignment(UUID moduleId, AssignmentCreateRequest request, User user) {
-        Module module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
+        Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAccess(module.getCourse().getId(), user, true);
 
         Integer nextOrderIndex = assignmentRepository.findMaxOrderIndexByModuleId(moduleId) + 1;
 
         Assignment assignment = Assignment.builder()
-                .module(module).title(request.getTitle())
+                .module(module)
+                .title(request.getTitle())
                 .description(request.getDescription())
                 .maxScore(request.getMaxScore())
                 .dueDate(request.getDueDate())
                 .orderIndex(nextOrderIndex)
+                .isPublished(request.getIsPublished() != null ? request.getIsPublished() : false)
+                .availableFrom(request.getAvailableFrom())
                 .build();
         assignmentRepository.save(assignment);
     }
 
     @Transactional(readOnly = true)
     public List<AssignmentSummaryProjection> getAssignmentsByModule(UUID moduleId, User user) {
-        Module module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
+        Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
         CourseRole userRole = securityValidator.getUserRoleInCourse(module.getCourse().getId(), user);
 
@@ -61,8 +62,7 @@ public class AssignmentService {
 
     @Transactional
     public void updateAssignment(UUID assignmentId, AssignmentUpdateRequest request, User user) {
-        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId)
-                .orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAccess(assignment.getModule().getCourse().getId(), user, true);
 
@@ -75,9 +75,18 @@ public class AssignmentService {
     }
 
     @Transactional
+    public void updateAssignmentPublishStatus(UUID assignmentId, Boolean isPublished, User user) {
+        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+
+        securityValidator.validateAccess(assignment.getModule().getCourse().getId(), user, true);
+
+        assignment.setIsPublished(isPublished);
+        assignmentRepository.save(assignment);
+    }
+
+    @Transactional
     public void deleteAssignment(UUID assignmentId, User user) {
-        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId)
-                .orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAccess(assignment.getModule().getCourse().getId(), user, true);
         assignmentRepository.delete(assignment);

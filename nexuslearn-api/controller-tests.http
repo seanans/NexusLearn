@@ -1,0 +1,262 @@
+### Register Teacher
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "teacher@nexuslearn.com",
+  "password": "password123",
+  "firstName": "Ada",
+  "lastName": "Lovelace"
+}
+
+### Register Student
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "student@nexuslearn.com",
+  "password": "password123",
+  "firstName": "Alan",
+  "lastName": "Turing"
+}
+
+### Authenticate Teacher
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "teacher@nexuslearn.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("teacher_token", response.body.accessToken);
+%}
+
+### Authenticate Student
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "student@nexuslearn.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("student_token", response.body.accessToken);
+%}
+
+### Authenticate Teacher
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "teacher@nexuslearn.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("teacher_token", response.body.accessToken);
+%}
+
+### Authenticate Student
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "student@nexuslearn.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("student_token", response.body.accessToken);
+%}
+
+### Create Course
+POST http://localhost:8080/api/courses
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Clean Code Architecture",
+  "description": "Building maintainable systems."
+}
+
+> {%
+    client.global.set("course_id", response.body.id);
+%}
+
+### Create Course Validation Failure
+POST http://localhost:8080/api/courses
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "description": "Missing title field."
+}
+
+### Get My Courses
+GET http://localhost:8080/api/courses/me?page=0&size=10
+Authorization: Bearer {{teacher_token}}
+
+### Update Course
+PUT http://localhost:8080/api/courses/{{course_id}}
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Clean Code Architecture V2",
+  "description": "Updated description."
+}
+
+### Update Course Unauthorized
+PUT http://localhost:8080/api/courses/{{course_id}}
+Content-Type: application/json
+Authorization: Bearer {{student_token}}
+
+{
+  "title": "Hacked Title",
+  "description": "Student trying to update."
+}
+
+### Add Course Member
+POST http://localhost:8080/api/courses/{{course_id}}/members
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "email": "student@nexuslearn.com",
+  "role": "STUDENT"
+}
+
+### Remove Course Member Unauthorized
+DELETE http://localhost:8080/api/courses/{{course_id}}/members/teacher@nexuslearn.com
+Authorization: Bearer {{student_token}}
+
+### Create Module
+POST http://localhost:8080/api/courses/{{course_id}}/modules
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Module 1: Domain Driven Design",
+  "description": "Core concepts."
+}
+
+> {%
+    client.global.set("module_id", response.body.id);
+%}
+
+### Get Modules
+GET http://localhost:8080/api/courses/{{course_id}}/modules
+Authorization: Bearer {{teacher_token}}
+
+### Update Module
+PUT http://localhost:8080/api/courses/{{course_id}}/modules/{{module_id}}
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Module 1: DDD",
+  "description": "Refined title.",
+  "isPublished": false
+}
+
+### Publish Module
+PATCH http://localhost:8080/api/courses/{{course_id}}/modules/{{module_id}}/publish
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "isPublished": true
+}
+
+### Create Lesson
+POST http://localhost:8080/api/modules/{{module_id}}/lessons
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Entities and Value Objects",
+  "content": "Lesson content goes here.",
+  "isPublished": true
+}
+
+### Get Lessons
+GET http://localhost:8080/api/modules/{{module_id}}/lessons
+Authorization: Bearer {{student_token}}
+
+### Create Assignment
+POST http://localhost:8080/api/modules/{{module_id}}/assignments
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Design a Domain Model",
+  "description": "Create a UML diagram.",
+  "maxScore": 100,
+  "dueDate": "2026-12-31T23:59:59",
+  "isPublished": true
+}
+
+### Get Assignments
+GET http://localhost:8080/api/modules/{{module_id}}/assignments
+Authorization: Bearer {{teacher_token}}
+
+> {%
+    client.global.set("assignment_id", response.body[0].id);
+%}
+
+### Submit Assignment
+POST http://localhost:8080/api/assignments/{{assignment_id}}/submissions
+Content-Type: application/json
+Authorization: Bearer {{student_token}}
+
+{
+  "submissionText": "Here is my domain model implementation."
+}
+
+> {%
+    client.global.set("submission_id", response.body.id);
+%}
+
+### Submit Assignment Unauthorized
+POST http://localhost:8080/api/assignments/{{assignment_id}}/submissions
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "submissionText": "Teachers cannot submit."
+}
+
+### Grade Submission
+PUT http://localhost:8080/api/submissions/{{submission_id}}/grade
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "score": 95,
+  "feedback": "Excellent separation of concerns."
+}
+
+### Grade Submission Boundary Failure
+PUT http://localhost:8080/api/submissions/{{submission_id}}/grade
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "score": 150,
+  "feedback": "Score exceeds max score of 100."
+}
+
+### Get Submissions
+GET http://localhost:8080/api/assignments/{{assignment_id}}/submissions
+Authorization: Bearer {{teacher_token}}
+
+### Delete Assignment
+DELETE http://localhost:8080/api/modules/{{module_id}}/assignments/{{assignment_id}}
+Authorization: Bearer {{teacher_token}}
+
+### Delete Course (Cascade Hierarchy)
+DELETE http://localhost:8080/api/courses/{{course_id}}
+Authorization: Bearer {{teacher_token}}

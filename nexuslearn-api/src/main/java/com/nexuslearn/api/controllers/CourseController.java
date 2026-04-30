@@ -1,9 +1,6 @@
 package com.nexuslearn.api.controllers;
 
-import com.nexuslearn.api.dtos.AddMemberToCourseRequest;
-import com.nexuslearn.api.dtos.CourseCreateRequest;
-import com.nexuslearn.api.dtos.CourseResponse;
-import com.nexuslearn.api.dtos.MessageResponse;
+import com.nexuslearn.api.dtos.*;
 import com.nexuslearn.api.services.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,15 +22,32 @@ public class CourseController {
 
     @PostMapping
     public ResponseEntity<CourseResponse> createCourse(@Valid @RequestBody CourseCreateRequest request, Authentication authentication) {
-
         CourseResponse response = courseService.createCourse(request, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/{courseId}")
+    public ResponseEntity<CourseResponse> updateCourse(@PathVariable UUID courseId, @Valid @RequestBody CourseUpdateRequest request, Authentication authentication) {
+        CourseResponse response = courseService.updateCourse(courseId, request, authentication.getName());
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{courseId}")
+    public ResponseEntity<Void> deleteCourse(@PathVariable UUID courseId, Authentication authentication) {
+        courseService.deleteCourse(courseId, authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{courseId}/members")
     public ResponseEntity<MessageResponse> addCourseMember(@PathVariable UUID courseId, @Valid @RequestBody AddMemberToCourseRequest request, Authentication authentication) {
         courseService.addMemberToCourse(courseId, request.getEmail(), request.getRole(), authentication.getName());
         return ResponseEntity.ok(new MessageResponse("Member successfully added to course"));
+    }
+
+    @DeleteMapping("/{courseId}/members/{email}")
+    public ResponseEntity<MessageResponse> removeCourseMember(@PathVariable UUID courseId, @PathVariable String email, Authentication authentication) {
+        courseService.removeMemberFromCourse(courseId, email, authentication.getName());
+        return ResponseEntity.ok(new MessageResponse("Member successfully removed from course"));
     }
 
     @GetMapping("/me")

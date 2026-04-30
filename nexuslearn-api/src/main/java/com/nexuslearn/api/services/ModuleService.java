@@ -55,8 +55,7 @@ public class ModuleService {
 
     @Transactional
     public ModuleResponse updateModule(UUID moduleId, ModuleUpdateRequest request, User user) {
-        Module module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
+        Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAccess(module.getCourse().getId(), user, true);
 
@@ -65,16 +64,22 @@ public class ModuleService {
         module.setIsPublished(request.getIsPublished());
 
         module = moduleRepository.save(module);
-        return ModuleResponse.builder()
-                .id(module.getId()).title(module.getTitle()).description(module.getDescription())
-                .orderIndex(module.getOrderIndex()).isPublished(module.getIsPublished())
-                .createdAt(module.getCreatedAt()).updatedAt(module.getUpdatedAt()).build();
+        return ModuleResponse.builder().id(module.getId()).title(module.getTitle()).description(module.getDescription()).orderIndex(module.getOrderIndex()).isPublished(module.getIsPublished()).createdAt(module.getCreatedAt()).updatedAt(module.getUpdatedAt()).build();
+    }
+
+    @Transactional
+    public void updateModulePublishStatus(UUID moduleId, Boolean isPublished, User user) {
+        Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
+
+        securityValidator.validateAccess(module.getCourse().getId(), user, true);
+
+        module.setIsPublished(isPublished);
+        moduleRepository.save(module);
     }
 
     @Transactional
     public void deleteModule(UUID moduleId, User user) {
-        Module module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
+        Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAccess(module.getCourse().getId(), user, true);
         moduleRepository.delete(module);

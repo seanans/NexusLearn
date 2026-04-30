@@ -1,8 +1,6 @@
 package com.nexuslearn.api.controllers;
 
-import com.nexuslearn.api.dtos.ModuleCreateRequest;
-import com.nexuslearn.api.dtos.ModuleResponse;
-import com.nexuslearn.api.dtos.ModuleSummaryProjection;
+import com.nexuslearn.api.dtos.*;
 import com.nexuslearn.api.security.CustomUserDetails;
 import com.nexuslearn.api.services.ModuleService;
 import jakarta.validation.Valid;
@@ -27,7 +25,6 @@ public class ModuleController {
             @PathVariable UUID courseId,
             @Valid @RequestBody ModuleCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
         ModuleResponse response = moduleService.createModule(courseId, request, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -36,8 +33,38 @@ public class ModuleController {
     public ResponseEntity<List<ModuleSummaryProjection>> getModules(
             @PathVariable UUID courseId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
         List<ModuleSummaryProjection> responses = moduleService.getModulesByCourse(courseId, userDetails.user());
         return ResponseEntity.ok(responses);
     }
+
+    @PutMapping("/{moduleId}")
+    public ResponseEntity<ModuleResponse> updateModule(
+            @PathVariable UUID courseId,
+            @PathVariable UUID moduleId,
+            @Valid @RequestBody ModuleUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ModuleResponse response = moduleService.updateModule(moduleId, request, userDetails.user());
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{moduleId}/publish")
+    public ResponseEntity<Void> updatePublishStatus(
+            @PathVariable UUID courseId,
+            @PathVariable UUID moduleId,
+            @Valid @RequestBody PublishStatusRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        moduleService.updateModulePublishStatus(moduleId, request.getIsPublished(), userDetails.user());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{moduleId}")
+    public ResponseEntity<Void> deleteModule(
+            @PathVariable UUID courseId,
+            @PathVariable UUID moduleId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        moduleService.deleteModule(moduleId, userDetails.user());
+        return ResponseEntity.noContent().build();
+    }
+
 }

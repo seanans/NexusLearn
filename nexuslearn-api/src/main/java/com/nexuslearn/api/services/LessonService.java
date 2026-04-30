@@ -61,6 +61,16 @@ public class LessonService {
         lessonRepository.delete(lesson);
     }
 
+    @Transactional
+    public void updateLessonPublishStatus(UUID lessonId, Boolean isPublished, User user) {
+        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow(() -> new AppException("Lesson not found", HttpStatus.NOT_FOUND));
+
+        securityValidator.validateAccess(lesson.getModule().getCourse().getId(), user, true);
+
+        lesson.setIsPublished(isPublished);
+        lessonRepository.save(lesson);
+    }
+
     @Transactional(readOnly = true)
     public List<LessonSummaryProjection> getLessonsByModule(UUID moduleId, User user) {
         Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
