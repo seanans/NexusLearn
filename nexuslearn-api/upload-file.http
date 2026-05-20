@@ -1,0 +1,11 @@
+### Upload File
+POST http://localhost:8080/api/files/upload
+Content-Type: multipart/form-data; boundary=boundary123
+Authorization: Bearer {{teacher_token}}
+
+--boundary123
+Content-Disposition: form-data; name="file"; filename="kotick.jpg"
+Content-Type: image/jpeg
+
+< C:/Users/x570p/Pictures/kotick.jpg
+--boundary123--

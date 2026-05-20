@@ -47,7 +47,8 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     var config = new org.springframework.web.cors.CorsConfiguration();
-                    config.setAllowedOrigins(java.util.List.of("http://localhost:4200")); // Allow Angular
+                    config.setAllowedOriginPatterns(java.util.List.of("*")); // Local testing
+                    // config.setAllowedOrigins(java.util.List.of("http://localhost:4200")); // Angular
                     config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(java.util.List.of("*"));
                     config.setAllowCredentials(true);
@@ -58,6 +59,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Open login/register endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll() // Open OpenAPI docs
+                        .requestMatchers("/ws-chat/**").permitAll() // Open for Websocket handshake
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

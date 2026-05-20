@@ -9,6 +9,11 @@ spring:
     password: rootpassword
     driver-class-name: org.postgresql.Driver
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   # JPA & Hibernate Configuration
   jpa:
     hibernate:
@@ -35,12 +40,17 @@ spring:
       file: ./compose.yaml
       lifecycle-management: start-only
 
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin123}
+  bucket-name: ${MINIO_BUCKET:nexuslearn-files}
+
 server:
   port: 8080
 
 app:
-  jwt:
-    # Local development only
+  jwt: # Local development only
     secret: ${JWT_SECRET:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08}
     # Access token: 15 minutes (900000 ms)
     expiration-ms: 900000

@@ -46,32 +46,6 @@ Content-Type: application/json
     client.global.set("student_token", response.body.accessToken);
 %}
 
-### Authenticate Teacher
-POST http://localhost:8080/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "teacher@nexuslearn.com",
-  "password": "password123"
-}
-
-> {%
-    client.global.set("teacher_token", response.body.accessToken);
-%}
-
-### Authenticate Student
-POST http://localhost:8080/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "student@nexuslearn.com",
-  "password": "password123"
-}
-
-> {%
-    client.global.set("student_token", response.body.accessToken);
-%}
-
 ### Create Course
 POST http://localhost:8080/api/courses
 Content-Type: application/json
