@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -24,12 +25,12 @@ public class LessonController {
     private final LessonService lessonService;
 
     @PostMapping
-    public ResponseEntity<Void> createLesson(
+    public ResponseEntity<Map<String, UUID>> createLesson(
             @PathVariable UUID moduleId,
             @Valid @RequestBody LessonCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        lessonService.createLesson(moduleId, request, userDetails.user());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        UUID lessonId = lessonService.createLesson(moduleId, request, userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", lessonId));
     }
 
     @GetMapping

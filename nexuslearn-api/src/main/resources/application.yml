@@ -22,6 +22,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        use_sql_comments: true
 
   # Flyway Migration Configuration
   flyway:
@@ -39,6 +40,10 @@ spring:
     compose:
       file: ./compose.yaml
       lifecycle-management: start-only
+
+logging:
+  level:
+    org.hibernate.orm.jdbc.bind: TRACE
 
 minio:
   url: ${MINIO_URL:http://localhost:9000}

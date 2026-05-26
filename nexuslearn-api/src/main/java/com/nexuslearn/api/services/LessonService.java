@@ -26,7 +26,7 @@ public class LessonService {
     private final CourseSecurityValidator securityValidator;
 
     @Transactional
-    public void createLesson(UUID moduleId, LessonCreateRequest request, User user) {
+    public UUID createLesson(UUID moduleId, LessonCreateRequest request, User user) {
         Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAccess(module.getCourse().getId(), user, true);
@@ -36,6 +36,8 @@ public class LessonService {
         Lesson lesson = Lesson.builder().module(module).title(request.getTitle()).content(request.getContent()).videoUrl(request.getVideoUrl()).orderIndex(nextOrderIndex).isPublished(request.getIsPublished() != null ? request.getIsPublished() : false).availableFrom(request.getAvailableFrom()).build();
 
         lessonRepository.save(lesson);
+
+        return lesson.getId();
     }
 
     @Transactional
@@ -76,6 +78,9 @@ public class LessonService {
         Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
         CourseRole userRole = securityValidator.getUserRoleInCourse(module.getCourse().getId(), user);
+        if (userRole == CourseRole.STUDENT && !module.getIsPublished()) {
+            throw new AppException("Access Denied: This module is unpublished", HttpStatus.FORBIDDEN);
+        }
 
         if (userRole == CourseRole.TEACHER || userRole == CourseRole.ASSISTANT) {
             return lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);

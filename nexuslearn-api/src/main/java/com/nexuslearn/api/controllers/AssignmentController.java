@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -24,12 +25,12 @@ public class AssignmentController {
     private final AssignmentService assignmentService;
 
     @PostMapping
-    public ResponseEntity<Void> createAssignment(
+    public ResponseEntity<Map<String, UUID>> createAssignment(
             @PathVariable UUID moduleId,
             @Valid @RequestBody AssignmentCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        assignmentService.createAssignment(moduleId, request, userDetails.user());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        UUID assignmentId = assignmentService.createAssignment(moduleId, request, userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", assignmentId));
     }
 
     @GetMapping

@@ -47,9 +47,9 @@ public class ModuleService {
         CourseRole role = securityValidator.getUserRoleInCourse(courseId, user);
 
         if (role == CourseRole.TEACHER || role == CourseRole.ASSISTANT) {
-            return moduleRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
+            return moduleRepository.findProjectedByCourseIdOrderByOrderIndexAsc(courseId);
         } else {
-            return moduleRepository.findByCourseIdAndIsPublishedTrueOrderByOrderIndexAsc(courseId);
+            return moduleRepository.findProjectedByCourseIdAndIsPublishedTrueOrderByOrderIndexAsc(courseId);
         }
     }
 

@@ -17,21 +17,48 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
     List<AssignmentSummaryProjection> findByModuleIdOrderByOrderIndexAsc(UUID moduleId);
 
     @Query("""
-        SELECT a FROM Assignment a\s
-        WHERE a.module.id = :moduleId\s
-        AND a.isPublished = true\s
-        AND a.module.isPublished = true\s
-        AND (a.availableFrom IS NULL OR a.availableFrom <= CURRENT_TIMESTAMP)
-        ORDER BY a.orderIndex ASC
-   \s""")
+                 SELECT a FROM Assignment a\s
+                 WHERE a.module.id = :moduleId\s
+                 AND a.isPublished = true\s
+                 AND a.module.isPublished = true\s
+                 AND (a.availableFrom IS NULL OR a.availableFrom <= CURRENT_TIMESTAMP)
+                 ORDER BY a.orderIndex ASC
+            \s""")
     List<AssignmentSummaryProjection> findVisibleAssignmentsForStudent(@Param("moduleId") UUID moduleId);
 
     @Query("SELECT COALESCE(MAX(a.orderIndex), 0) FROM Assignment a WHERE a.module.id = :moduleId")
     Integer findMaxOrderIndexByModuleId(@Param("moduleId") UUID moduleId);
 
-    @Query("SELECT a FROM Assignment a " +
-            "JOIN FETCH a.module m " +
-            "JOIN FETCH m.course c " +
-            "WHERE a.id = :assignmentId")
+    @Query("SELECT a FROM Assignment a " + "JOIN FETCH a.module m " + "JOIN FETCH m.course c " + "WHERE a.id = :assignmentId")
     Optional<Assignment> findByIdWithCourseContext(@Param("assignmentId") UUID assignmentId);
+
+    // bulk fetch syllabus
+    // for Teachers/Assistants
+    List<Assignment> findByModuleIdIn(List<UUID> moduleIds);
+
+    // for Students
+    @Query("""
+                SELECT a FROM Assignment a\s
+                WHERE a.module.id IN :moduleIds\s
+                AND a.isPublished = true\s
+                AND a.module.isPublished = true\s
+                AND (a.availableFrom IS NULL OR a.availableFrom <= CURRENT_TIMESTAMP)
+           \s""")
+    List<Assignment> findVisibleByModuleIdIn(@Param("moduleIds") List<UUID> moduleIds);
+
+
+    // detail fetch
+    // for Teachers/Assistants
+    Optional<AssignmentSummaryProjection> findProjectedByIdAndModule_Course_Id(UUID id, UUID courseId);
+
+    // for Students
+    @Query("""
+                SELECT a FROM Assignment a\s
+                WHERE a.id = :id\s
+                AND a.module.course.id = :courseId\s
+                AND a.isPublished = true\s
+                AND a.module.isPublished = true\s
+                AND (a.availableFrom IS NULL OR a.availableFrom <= CURRENT_TIMESTAMP)
+           \s""")
+    Optional<AssignmentSummaryProjection> findVisibleProjectedByIdAndCourseId(@Param("id") UUID id, @Param("courseId") UUID courseId);
 }

@@ -27,7 +27,7 @@ public class AssignmentService {
     private final CourseSecurityValidator securityValidator;
 
     @Transactional
-    public void createAssignment(UUID moduleId, AssignmentCreateRequest request, User user) {
+    public UUID createAssignment(UUID moduleId, AssignmentCreateRequest request, User user) {
         Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAccess(module.getCourse().getId(), user, true);
@@ -44,7 +44,8 @@ public class AssignmentService {
                 .isPublished(request.getIsPublished() != null ? request.getIsPublished() : false)
                 .availableFrom(request.getAvailableFrom())
                 .build();
-        assignmentRepository.save(assignment);
+        assignment = assignmentRepository.save(assignment);
+        return assignment.getId();
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +53,10 @@ public class AssignmentService {
         Module module = moduleRepository.findById(moduleId).orElseThrow(() -> new AppException("Module not found", HttpStatus.NOT_FOUND));
 
         CourseRole userRole = securityValidator.getUserRoleInCourse(module.getCourse().getId(), user);
-
+        if (userRole == CourseRole.STUDENT && !module.getIsPublished()) {
+            throw new AppException("Access Denied: This module is unpublished", HttpStatus.FORBIDDEN);
+        }
+        
         if (userRole == CourseRole.TEACHER || userRole == CourseRole.ASSISTANT) {
             return assignmentRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
         } else {

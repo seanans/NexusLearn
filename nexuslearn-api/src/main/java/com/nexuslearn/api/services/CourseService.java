@@ -1,13 +1,10 @@
 package com.nexuslearn.api.services;
 
-import com.nexuslearn.api.dtos.CourseCreateRequest;
-import com.nexuslearn.api.dtos.CourseResponse;
-import com.nexuslearn.api.dtos.CourseUpdateRequest;
+import com.nexuslearn.api.dtos.*;
 import com.nexuslearn.api.exceptions.AppException;
 import com.nexuslearn.api.models.*;
-import com.nexuslearn.api.repositories.CourseMemberRepository;
-import com.nexuslearn.api.repositories.CourseRepository;
-import com.nexuslearn.api.repositories.UserRepository;
+import com.nexuslearn.api.models.Module;
+import com.nexuslearn.api.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -15,7 +12,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -23,13 +24,88 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final CourseMemberRepository courseMemberRepository;
     private final UserRepository userRepository;
+    private final LessonRepository lessonRepository;
+    private final ModuleRepository moduleRepository;
+    private final AssignmentRepository assignmentRepository;
     private final CourseSecurityValidator securityValidator;
 
+    @Transactional(readOnly = true)
+    public CourseResponse getCourseById(UUID courseId, User user) {
+        securityValidator.validateAccess(courseId, user, false);
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new AppException("Course not found", HttpStatus.NOT_FOUND));
+        return CourseResponse.builder().id(course.getId()).title(course.getTitle()).description(course.getDescription()).lastActivityMessage(course.getLastActivityMessage()).lastActivityAt(course.getLastActivityAt()).build();
+    }
+
+    @Transactional(readOnly = true)
+    public CourseSyllabusResponse getCourseSyllabus(UUID courseId, User user) {
+        CourseRole role = securityValidator.getUserRoleInCourse(courseId, user);
+
+        List<Module> modules;
+        if (role == CourseRole.TEACHER || role == CourseRole.ASSISTANT) {
+            modules = moduleRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
+        } else {
+            modules = moduleRepository.findByCourseIdAndIsPublishedTrueOrderByOrderIndexAsc(courseId);
+        }
+
+        if (modules.isEmpty()) {
+            return new CourseSyllabusResponse(courseId, java.util.Collections.emptyList());
+        }
+
+        List<UUID> moduleIds = modules.stream().map(Module::getId).toList();
+
+        List<Lesson> allLessons;
+        List<Assignment> allAssignments;
+
+        if (role == CourseRole.TEACHER || role == CourseRole.ASSISTANT) {
+            allLessons = lessonRepository.findByModuleIdIn(moduleIds);
+            allAssignments = assignmentRepository.findByModuleIdIn(moduleIds);
+        } else {
+            allLessons = lessonRepository.findVisibleByModuleIdIn(moduleIds);
+            allAssignments = assignmentRepository.findVisibleByModuleIdIn(moduleIds);
+        }
+
+        Map<UUID, List<Lesson>> lessonsByModule = allLessons.stream().collect(Collectors.groupingBy(l -> l.getModule().getId()));
+        Map<UUID, List<Assignment>> assignmentsByModule = allAssignments.stream().collect(Collectors.groupingBy(a -> a.getModule().getId()));
+
+        List<CourseSyllabusResponse.SyllabusModuleDto> moduleDtos = modules.stream().map(module -> {
+            UUID mId = module.getId();
+
+            Stream<CourseSyllabusResponse.SyllabusItemDto> lessonItems = lessonsByModule.getOrDefault(mId, java.util.Collections.emptyList()).stream().map(l -> new CourseSyllabusResponse.SyllabusItemDto(l.getId(), l.getTitle(), ItemType.LESSON, l.getOrderIndex()));
+
+            Stream<CourseSyllabusResponse.SyllabusItemDto> assignmentItems = assignmentsByModule.getOrDefault(mId, java.util.Collections.emptyList()).stream().map(a -> new CourseSyllabusResponse.SyllabusItemDto(a.getId(), a.getTitle(), ItemType.ASSIGNMENT, a.getOrderIndex()));
+
+            List<CourseSyllabusResponse.SyllabusItemDto> combinedItems = Stream.concat(lessonItems, assignmentItems).sorted(java.util.Comparator.comparing(CourseSyllabusResponse.SyllabusItemDto::orderIndex)).toList();
+
+            return new CourseSyllabusResponse.SyllabusModuleDto(mId, module.getTitle(), module.getOrderIndex(), combinedItems);
+        }).toList();
+
+        return new CourseSyllabusResponse(courseId, moduleDtos);
+    }
+
+    @Transactional(readOnly = true)
+    public LessonSummaryProjection getLessonById(UUID courseId, UUID lessonId, User user) {
+        CourseRole role = securityValidator.getUserRoleInCourse(courseId, user);
+
+        if (role == CourseRole.TEACHER || role == CourseRole.ASSISTANT) {
+            return lessonRepository.findProjectedByIdAndModule_Course_Id(lessonId, courseId).orElseThrow(() -> new AppException("Lesson not found", HttpStatus.NOT_FOUND));
+        } else {
+            return lessonRepository.findVisibleProjectedByIdAndCourseId(lessonId, courseId).orElseThrow(() -> new AppException("Lesson not found or not yet available", HttpStatus.FORBIDDEN));
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public AssignmentSummaryProjection getAssignmentById(UUID courseId, UUID assignmentId, User user) {
+        CourseRole role = securityValidator.getUserRoleInCourse(courseId, user);
+
+        if (role == CourseRole.TEACHER || role == CourseRole.ASSISTANT) {
+            return assignmentRepository.findProjectedByIdAndModule_Course_Id(assignmentId, courseId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+        } else {
+            return assignmentRepository.findVisibleProjectedByIdAndCourseId(assignmentId, courseId).orElseThrow(() -> new AppException("Assignment not found or not yet available", HttpStatus.FORBIDDEN));
+        }
+    }
+
     @Transactional
-    public CourseResponse createCourse(CourseCreateRequest request, String userEmail) {
-
-        User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
-
+    public CourseResponse createCourse(CourseCreateRequest request, User user) {
         Course course = Course.builder().title(request.getTitle()).description(request.getDescription()).lastActivityMessage("Course created").lastActivityAt(java.time.LocalDateTime.now()).build();
 
         course = courseRepository.save(course);
@@ -42,9 +118,7 @@ public class CourseService {
     }
 
     @Transactional
-    public CourseResponse updateCourse(UUID courseId, CourseUpdateRequest request, String userEmail) {
-        User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
-
+    public CourseResponse updateCourse(UUID courseId, CourseUpdateRequest request, User user) {
         if (securityValidator.getUserRoleInCourse(courseId, user) != CourseRole.TEACHER) {
             throw new AppException("Access Denied: Only teachers can update course details", HttpStatus.FORBIDDEN);
         }
@@ -61,10 +135,8 @@ public class CourseService {
     }
 
     @Transactional
-    public void addMemberToCourse(UUID courseId, String targetEmail, CourseRole role, String requesterEmail) {
+    public void addMemberToCourse(UUID courseId, String targetEmail, CourseRole role, User requester) {
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new AppException("Course not found", HttpStatus.NOT_FOUND));
-        User requester = userRepository.findByEmail(requesterEmail).orElseThrow(() -> new AppException("Requester not found", HttpStatus.NOT_FOUND));
-
         CourseRole requesterRole = securityValidator.getUserRoleInCourse(courseId, requester);
 
         if (requesterRole == CourseRole.STUDENT) {
@@ -87,14 +159,13 @@ public class CourseService {
     }
 
     @Transactional
-    public void removeMemberFromCourse(UUID courseId, String targetEmail, String requesterEmail) {
-        User requester = userRepository.findByEmail(requesterEmail).orElseThrow(() -> new AppException("Requester not found", HttpStatus.NOT_FOUND));
+    public void removeMemberFromCourse(UUID courseId, String targetEmail, User requester) {
         User targetUser = userRepository.findByEmail(targetEmail).orElseThrow(() -> new AppException("Target user not found", HttpStatus.NOT_FOUND));
 
         CourseRole requesterRole = securityValidator.getUserRoleInCourse(courseId, requester);
 
         // Cross-removal vs Self-removal logic
-        if (!requesterEmail.equals(targetEmail)) {
+        if (!requester.getEmail().equals(targetEmail)) {
             if (requesterRole == CourseRole.STUDENT) {
                 throw new AppException("Access Denied: Students can only remove themselves", HttpStatus.FORBIDDEN);
             }
@@ -119,16 +190,13 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public Slice<CourseResponse> getMyCourses(String email, Pageable pageable) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+    public Slice<CourseResponse> getMyCourses(User user, Pageable pageable) {
 
         return courseRepository.findDashboardCourses(user.getId(), pageable).map(proj -> CourseResponse.builder().id(proj.getId()).title(proj.getTitle()).description(proj.getDescription()).lastActivityMessage(proj.getLastActivityMessage()).lastActivityAt(proj.getLastActivityAt()).creatorName(proj.getTeacherFirstName() != null ? proj.getTeacherFirstName() + " " + proj.getTeacherLastName() : "No Teacher Assigned").build());
     }
 
     @Transactional
-    public void deleteCourse(UUID courseId, String requesterEmail) {
-        User user = userRepository.findByEmail(requesterEmail).orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
-
+    public void deleteCourse(UUID courseId, User user) {
         if (securityValidator.getUserRoleInCourse(courseId, user) != CourseRole.TEACHER) {
             throw new AppException("Access Denied: Only teachers can delete a course", HttpStatus.FORBIDDEN);
         }
