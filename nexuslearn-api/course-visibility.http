@@ -1,0 +1,164 @@
+### 1. Register & Login Teacher
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "teacher@nexuslearn.com", "password": "password123", "firstName": "Ada", "lastName": "Lovelace"
+}
+
+###
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "teacher@nexuslearn.com", "password": "password123"
+}
+
+> {%
+    client.test("Teacher Login Successful", function() {
+        client.assert(response.status === 200, "Should return 200");
+        client.assert(response.body.accessToken !== undefined, "Missing JWT");
+    });
+    client.global.set("teacher_token", response.body.accessToken);
+%}
+
+### 2. Register & Login Student
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "student@nexuslearn.com", "password": "password123", "firstName": "Alan", "lastName": "Turing"
+}
+
+###
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "student@nexuslearn.com", "password": "password123"
+}
+
+> {%
+    client.global.set("student_token", response.body.accessToken);
+%}
+
+### 3. Create Course
+POST http://localhost:8080/api/courses
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Mastering JPA", "description": "Hibernate deep dive."
+}
+
+> {%
+    client.test("Course Created", function() {
+        client.assert(response.status === 201, "Should be 201 Created");
+        client.assert(response.body.id !== undefined, "Course must return ID");
+    });
+    client.global.set("course_id", response.body.id);
+%}
+
+### 4. Enroll Student
+POST http://localhost:8080/api/courses/{{course_id}}/members
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "email": "student@nexuslearn.com", "role": "STUDENT"
+}
+
+### 5. Create Module
+POST http://localhost:8080/api/courses/{{course_id}}/modules
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Module 1", "description": "Basics"
+}
+
+> {%
+    client.test("Module Created", function() {
+        client.assert(response.status === 201, "Should be 201");
+        client.assert(response.body.id !== undefined, "Module must return ID");
+    });
+    client.global.set("module_id", response.body.id);
+%}
+
+### 6. Create Assignment (Draft)
+POST http://localhost:8080/api/modules/{{module_id}}/assignments
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "N+1 Homework",
+  "description": "Fix the queries",
+  "maxScore": 100,
+  "dueDate": "2026-12-31T23:59:59",
+  "isPublished": false
+}
+
+> {%
+    client.test("Assignment Created", function() {
+        client.assert(response.status === 201, "Should be 201");
+        client.assert(response.body.id !== undefined, "Assignment must return ID");
+    });
+    client.global.set("assignment_id", response.body.id);
+%}
+
+### 7. Create Lesson (Published)
+POST http://localhost:8080/api/modules/{{module_id}}/lessons
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "title": "Intro to Fetch Joins", "content": "Text here", "isPublished": true
+}
+
+> {%
+    client.global.set("lesson_id", response.body.id);
+%}
+
+### 8. Student Syllabus Access (Module is UNPUBLISHED)
+# Expected: The entire module is hidden, so items array should be empty or module shouldn't exist.
+GET http://localhost:8080/api/courses/{{course_id}}/syllabus
+Authorization: Bearer {{student_token}}
+
+> {%
+    client.test("Student sees nothing if Module is unpublished", function() {
+        client.assert(response.status === 200, "Should be 200");
+        client.assert(response.body.modules.length === 0, "Modules array should be empty");
+    });
+%}
+
+### 9. Publish the Module
+PATCH http://localhost:8080/api/courses/{{course_id}}/modules/{{module_id}}/publish
+Content-Type: application/json
+Authorization: Bearer {{teacher_token}}
+
+{
+  "isPublished": true
+}
+
+### 10. Student Syllabus Access (Module PUBLISHED)
+# Expected: Should see Lesson (Published), but NOT Assignment (Draft)
+GET http://localhost:8080/api/courses/{{course_id}}/syllabus
+Authorization: Bearer {{student_token}}
+
+> {%
+    client.test("Student sees only published items", function() {
+        const items = response.body.modules[0].items;
+        client.assert(items.length === 1, "Should only see 1 item");
+        client.assert(items[0].title === "Intro to Fetch Joins", "Should see the lesson");
+    });
+%}
+
+### 11. Student fetches Draft Assignment directly
+GET http://localhost:8080/api/courses/{{course_id}}/assignments/{{assignment_id}}
+Authorization: Bearer {{student_token}}
+
+> {%
+    client.test("Student blocked from Draft Assignment", function() {
+        client.assert(response.status === 403, "Must return 403 Forbidden");
+    });
+%}

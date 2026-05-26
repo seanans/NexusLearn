@@ -93,7 +93,7 @@ public class CascadeDeletionIT {
     @Test
     void deleteCourse_AsTeacher_CascadesToAllChildren() {
         // Action: Delete the root of the hierarchy
-        courseService.deleteCourse(courseId, teacher.getEmail());
+        courseService.deleteCourse(courseId, teacher);
 
         // Flush is required in tests to force Hibernate to send DELETE statements to PostgreSQL immediately
         courseRepository.flush();
