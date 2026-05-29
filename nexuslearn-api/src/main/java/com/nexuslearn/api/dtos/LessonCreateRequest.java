@@ -12,7 +12,6 @@ public class LessonCreateRequest {
     @NotBlank(message = "Lesson title is required")
     private String title;
     private String content;
-    private String videoUrl;
     private Boolean isPublished = false;
     private LocalDateTime availableFrom;
 }

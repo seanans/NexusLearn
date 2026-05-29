@@ -11,6 +11,7 @@ public class ModuleUpdateRequest {
     @NotBlank(message = "Module title is required")
     private String title;
     private String description;
+
     @NotNull(message = "Publication status is required")
     private Boolean isPublished;
 }

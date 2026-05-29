@@ -28,22 +28,13 @@ public class ChatController {
     private final SimpMessagingTemplate messagingTemplate;
 
     @GetMapping("/api/courses/{courseId}/chat")
-    public List<ChatMessageResponse> getChatHistory(
-            @PathVariable UUID courseId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-
+    public List<ChatMessageResponse> getChatHistory(@PathVariable UUID courseId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return chatService.getCourseChatHistory(courseId, userDetails.user(), PageRequest.of(page, size)).getContent();
     }
 
     @MessageMapping("/chat.{courseId}")
-    public void sendMessage(
-            @DestinationVariable UUID courseId,
-            @Payload ChatMessageRequest request, Principal principal) {
-
+    public void sendMessage(@DestinationVariable UUID courseId, @Payload ChatMessageRequest request, Principal principal) {
         ChatMessageResponse response = chatService.processAndSaveMessage(courseId, request, principal);
-
         messagingTemplate.convertAndSend("/topic/course." + courseId, response);
     }
 }

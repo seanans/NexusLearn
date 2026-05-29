@@ -2,21 +2,24 @@ package com.nexuslearn.api.dtos;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Getter
+@Setter
 @Builder
-public class ChatMessageResponse {
+public class AssignmentResponse {
     private UUID id;
-    private UUID courseId;
-    private String senderName;
-    private UUID senderId;
-    private String content;
+    private String title;
+    private String description;
+    private Integer maxScore;
+    private LocalDateTime dueDate;
+    private Integer orderIndex;
+    private boolean isPublished;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private boolean isEdited;
     private List<AttachmentResponse> attachments;
 }

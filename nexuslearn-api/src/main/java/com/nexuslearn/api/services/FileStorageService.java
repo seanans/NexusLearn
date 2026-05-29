@@ -1,23 +1,37 @@
 package com.nexuslearn.api.services;
 
+import com.nexuslearn.api.dtos.PresignedUrlResponse;
 import com.nexuslearn.api.exceptions.AppException;
+import com.nexuslearn.api.models.EntityType;
+import com.nexuslearn.api.models.User;
 import io.minio.*;
+import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class FileStorageService {
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            "pdf", "doc", "docx", "txt",                // Documents
+            "png", "jpg", "jpeg", "gif", "webp",        // Images
+            "mp4", "webm",                              // Videos
+            "zip", "rar"                                // Archives (for code submissions)
+    );
     private final MinioClient minioClient;
-
+    private final CourseSecurityValidator securityValidator;
     @Value("${minio.bucket-name:nexuslearn-files}")
     private String bucketName;
+
+    @Value("${minio.url:http://localhost:9000}")
+    private String minioBaseUrl;
 
     @PostConstruct
     public void initBucket() {
@@ -25,61 +39,55 @@ public class FileStorageService {
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-
-                String policy = """
-                    {
-                      "Version": "2012-10-17",
-                      "Statement": [
-                        {
-                          "Effect": "Allow",
-                          "Principal": "*",
-                          "Action": ["s3:GetObject"],
-                          "Resource": ["arn:aws:s3:::%s/*"]
-                        }
-                      ]
-                    }
-                    """.formatted(bucketName);
-
-                minioClient.setBucketPolicy(
-                        SetBucketPolicyArgs.builder()
-                                .bucket(bucketName)
-                                .config(policy)
-                                .build()
-                );
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize MinIO bucket", e);
         }
     }
 
-    public String uploadFile(MultipartFile file) {
+    public PresignedUrlResponse generatePreSignedUploadUrl(String originalFilename, UUID entityId, EntityType entityType, User user) {
+        String extension = getFileExtension(originalFilename);
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new AppException("File type '." + extension + "' is not allowed for upload.", HttpStatus.BAD_REQUEST);
+        }
+
+        securityValidator.validateAttachmentUpload(entityId, entityType, user);
+
         try {
-            String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
+            String objectName = UUID.randomUUID() + "-" + originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_");
 
-            minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(bucketName)
-                    .object(fileName)
-                    .stream(file.getInputStream(), file.getSize(), -1)
-                    .contentType(file.getContentType())
-                    .build());
+            String presignedUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.PUT).bucket(bucketName).object(objectName).expiry(15, TimeUnit.MINUTES).build());
 
-            return "http://localhost:9000/" + bucketName + "/" + fileName;
+            String finalFileUrl = minioBaseUrl + "/" + bucketName + "/" + objectName;
+
+            return new PresignedUrlResponse(presignedUrl, finalFileUrl, objectName);
+
         } catch (Exception e) {
-            throw new AppException("Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new AppException("Failed to generate secure upload ticket", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public String generatePreSignedDownloadUrl(String objectName) {
+        try {
+            return minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.GET).bucket(bucketName).object(objectName).expiry(1, TimeUnit.HOURS).build());
+        } catch (Exception e) {
+            throw new AppException("Failed to generate secure download ticket", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     public void deleteFile(String fileUrl) {
         try {
-            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-            minioClient.removeObject(
-                    RemoveObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(fileName)
-                            .build()
-            );
+            String objectName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
         } catch (Exception e) {
-            throw new AppException("Failed to delete file", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new AppException("Failed to delete file from cloud storage", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private String getFileExtension(String fileName) {
+        if (fileName == null || !fileName.contains(".")) {
+            return "";
+        }
+        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
     }
 }

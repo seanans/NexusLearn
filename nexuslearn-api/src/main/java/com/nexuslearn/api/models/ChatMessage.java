@@ -21,7 +21,4 @@ public class ChatMessage extends BaseEntity{
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
-
-    @Column(name = "file_url", length = 1024)
-    private String fileUrl;
 }

@@ -1,6 +1,6 @@
 package com.nexuslearn.api.repositories;
 
-import com.nexuslearn.api.dtos.LessonSummaryProjection;
+import com.nexuslearn.api.dtos.LessonResponse;
 import com.nexuslearn.api.models.Lesson;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Repository
 public interface LessonRepository extends JpaRepository<Lesson, UUID> {
-    List<LessonSummaryProjection> findByModuleIdOrderByOrderIndexAsc(UUID moduleId);
+    List<Lesson> findByModuleIdOrderByOrderIndexAsc(UUID moduleId);
 
     @Query("SELECT COALESCE(MAX(l.orderIndex), 0) FROM Lesson l WHERE l.module.id = :moduleId")
     Integer findMaxOrderIndexByModuleId(@Param("moduleId") UUID moduleId);
@@ -25,8 +25,8 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
                  AND l.module.isPublished = true\s
                  AND (l.availableFrom IS NULL OR l.availableFrom <= CURRENT_TIMESTAMP)
                  ORDER BY l.orderIndex ASC
-            \s""")
-    List<LessonSummaryProjection> findVisibleLessonsForStudent(@Param("moduleId") UUID moduleId);
+           \s""")
+    List<Lesson> findVisibleLessonsForStudent(@Param("moduleId") UUID moduleId);
 
     // bulk fetch for syllabus
     // for Teachers/Assistants
@@ -39,13 +39,13 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
                 AND l.isPublished = true\s
                 AND l.module.isPublished = true\s
                 AND (l.availableFrom IS NULL OR l.availableFrom <= CURRENT_TIMESTAMP)
-           \s""")
+          \s""")
     List<Lesson> findVisibleByModuleIdIn(@Param("moduleIds") List<UUID> moduleIds);
 
 
     // detail fetch
     // for Teachers/Assistants
-    Optional<LessonSummaryProjection> findProjectedByIdAndModule_Course_Id(UUID id, UUID courseId);
+    Optional<Lesson> findByIdAndModule_Course_Id(UUID id, UUID courseId);
 
     // for Students
     @Query("""
@@ -55,6 +55,6 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
                 AND l.isPublished = true\s
                 AND l.module.isPublished = true\s
                 AND (l.availableFrom IS NULL OR l.availableFrom <= CURRENT_TIMESTAMP)
-           \s""")
-    Optional<LessonSummaryProjection> findVisibleProjectedByIdAndCourseId(@Param("id") UUID id, @Param("courseId") UUID courseId);
+          \s""")
+    Optional<Lesson> findVisibleByIdAndCourseId(@Param("id") UUID id, @Param("courseId") UUID courseId);
 }

@@ -23,30 +23,19 @@ public class SubmissionController {
     private final SubmissionService submissionService;
 
     @PostMapping("/assignments/{assignmentId}/submissions")
-    public ResponseEntity<SubmissionResponse> submitAssignment(
-            @PathVariable UUID assignmentId,
-            @Valid @RequestBody SubmissionCreateRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-
+    public ResponseEntity<SubmissionResponse> submitAssignment(@PathVariable UUID assignmentId, @Valid @RequestBody SubmissionCreateRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         SubmissionResponse response = submissionService.submitAssignment(assignmentId, request, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/submissions/{submissionId}/grade")
-    public ResponseEntity<SubmissionResponse> gradeSubmission(
-            @PathVariable UUID submissionId,
-            @Valid @RequestBody SubmissionGradeRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-
+    public ResponseEntity<SubmissionResponse> gradeSubmission(@PathVariable UUID submissionId, @Valid @RequestBody SubmissionGradeRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         SubmissionResponse response = submissionService.gradeSubmission(submissionId, request, userDetails.user());
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/assignments/{assignmentId}/submissions")
-    public ResponseEntity<List<SubmissionResponse>> getSubmissions(
-            @PathVariable UUID assignmentId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-
+    public ResponseEntity<List<SubmissionResponse>> getSubmissions(@PathVariable UUID assignmentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(submissionService.getSubmissionsForAssignment(assignmentId, userDetails.user()));
     }
 }

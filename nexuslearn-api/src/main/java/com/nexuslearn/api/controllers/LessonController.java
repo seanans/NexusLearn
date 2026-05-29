@@ -1,7 +1,7 @@
 package com.nexuslearn.api.controllers;
 
 import com.nexuslearn.api.dtos.LessonCreateRequest;
-import com.nexuslearn.api.dtos.LessonSummaryProjection;
+import com.nexuslearn.api.dtos.LessonResponse;
 import com.nexuslearn.api.dtos.LessonUpdateRequest;
 import com.nexuslearn.api.dtos.PublishStatusRequest;
 import com.nexuslearn.api.security.CustomUserDetails;
@@ -25,47 +25,31 @@ public class LessonController {
     private final LessonService lessonService;
 
     @PostMapping
-    public ResponseEntity<Map<String, UUID>> createLesson(
-            @PathVariable UUID moduleId,
-            @Valid @RequestBody LessonCreateRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<Map<String, UUID>> createLesson(@PathVariable UUID moduleId, @Valid @RequestBody LessonCreateRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         UUID lessonId = lessonService.createLesson(moduleId, request, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", lessonId));
     }
 
     @GetMapping
-    public ResponseEntity<List<LessonSummaryProjection>> getLessons(
-            @PathVariable UUID moduleId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<List<LessonResponse>> getLessons(@PathVariable UUID moduleId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(lessonService.getLessonsByModule(moduleId, userDetails.user()));
     }
 
     @PutMapping("/{lessonId}")
-    public ResponseEntity<Void> updateLesson(
-            @PathVariable UUID moduleId,
-            @PathVariable UUID lessonId,
-            @Valid @RequestBody LessonUpdateRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<Void> updateLesson(@PathVariable UUID moduleId, @PathVariable UUID lessonId, @Valid @RequestBody LessonUpdateRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         lessonService.updateLesson(lessonId, request, userDetails.user());
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{lessonId}/publish")
-    public ResponseEntity<Void> updatePublishStatus(
-            @PathVariable UUID moduleId,
-            @PathVariable UUID lessonId,
-            @Valid @RequestBody PublishStatusRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<Void> updatePublishStatus(@PathVariable UUID moduleId, @PathVariable UUID lessonId, @Valid @RequestBody PublishStatusRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         lessonService.updateLessonPublishStatus(lessonId, request.getIsPublished(), userDetails.user());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{lessonId}")
-    public ResponseEntity<Void> deleteLesson(
-            @PathVariable UUID moduleId,
-            @PathVariable UUID lessonId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<Void> deleteLesson(@PathVariable UUID moduleId, @PathVariable UUID lessonId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         lessonService.deleteLesson(lessonId, userDetails.user());
         return ResponseEntity.noContent().build();
     }

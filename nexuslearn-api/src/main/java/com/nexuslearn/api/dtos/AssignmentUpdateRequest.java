@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class AssignmentUpdateRequest {
     @NotBlank(message = "Assignment title is required")
     private String title;
+
     private String description;
 
     @NotNull(message = "Max score is required")

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -19,4 +20,6 @@ public class SubmissionResponse {
     private String feedback;
     private LocalDateTime submittedAt;
     private boolean isLate;
+    private UUID gradedBy;
+    private List<AttachmentResponse> attachments;
 }

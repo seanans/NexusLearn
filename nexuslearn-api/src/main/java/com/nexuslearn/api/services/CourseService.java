@@ -28,12 +28,13 @@ public class CourseService {
     private final ModuleRepository moduleRepository;
     private final AssignmentRepository assignmentRepository;
     private final CourseSecurityValidator securityValidator;
+    private final AttachmentService attachmentService;
 
     @Transactional(readOnly = true)
     public CourseResponse getCourseById(UUID courseId, User user) {
-        securityValidator.validateAccess(courseId, user, false);
+        CourseRole role = securityValidator.getUserRoleInCourse(courseId, user);
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new AppException("Course not found", HttpStatus.NOT_FOUND));
-        return CourseResponse.builder().id(course.getId()).title(course.getTitle()).description(course.getDescription()).lastActivityMessage(course.getLastActivityMessage()).lastActivityAt(course.getLastActivityAt()).build();
+        return CourseResponse.builder().id(course.getId()).title(course.getTitle()).description(course.getDescription()).lastActivityMessage(course.getLastActivityMessage()).lastActivityAt(course.getLastActivityAt()).currentUserRole(role).build();
     }
 
     @Transactional(readOnly = true)
@@ -83,25 +84,30 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public LessonSummaryProjection getLessonById(UUID courseId, UUID lessonId, User user) {
+    public LessonResponse getLessonById(UUID courseId, UUID lessonId, User user) {
         CourseRole role = securityValidator.getUserRoleInCourse(courseId, user);
+        Lesson lesson;
 
         if (role == CourseRole.TEACHER || role == CourseRole.ASSISTANT) {
-            return lessonRepository.findProjectedByIdAndModule_Course_Id(lessonId, courseId).orElseThrow(() -> new AppException("Lesson not found", HttpStatus.NOT_FOUND));
+            lesson = lessonRepository.findByIdAndModule_Course_Id(lessonId, courseId).orElseThrow(() -> new AppException("Lesson not found", HttpStatus.NOT_FOUND));
         } else {
-            return lessonRepository.findVisibleProjectedByIdAndCourseId(lessonId, courseId).orElseThrow(() -> new AppException("Lesson not found or not yet available", HttpStatus.FORBIDDEN));
+            lesson = lessonRepository.findVisibleByIdAndCourseId(lessonId, courseId).orElseThrow(() -> new AppException("Lesson not found or not yet available", HttpStatus.FORBIDDEN));
         }
+
+        return LessonResponse.builder().id(lesson.getId()).title(lesson.getTitle()).content(lesson.getContent()).orderIndex(lesson.getOrderIndex()).isPublished(lesson.getIsPublished()).createdAt(lesson.getCreatedAt()).updatedAt(lesson.getUpdatedAt()).attachments(attachmentService.getAttachmentsForEntity(lessonId, EntityType.LESSON, user)).build();
     }
 
     @Transactional(readOnly = true)
-    public AssignmentSummaryProjection getAssignmentById(UUID courseId, UUID assignmentId, User user) {
+    public AssignmentResponse getAssignmentById(UUID courseId, UUID assignmentId, User user) {
         CourseRole role = securityValidator.getUserRoleInCourse(courseId, user);
-
+        Assignment assignment;
         if (role == CourseRole.TEACHER || role == CourseRole.ASSISTANT) {
-            return assignmentRepository.findProjectedByIdAndModule_Course_Id(assignmentId, courseId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+            assignment = assignmentRepository.findByIdAndModule_Course_Id(assignmentId, courseId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
         } else {
-            return assignmentRepository.findVisibleProjectedByIdAndCourseId(assignmentId, courseId).orElseThrow(() -> new AppException("Assignment not found or not yet available", HttpStatus.FORBIDDEN));
+            assignment = assignmentRepository.findVisibleByIdAndCourseId(assignmentId, courseId).orElseThrow(() -> new AppException("Assignment not found or not yet available", HttpStatus.FORBIDDEN));
         }
+
+        return AssignmentResponse.builder().id(assignment.getId()).title(assignment.getTitle()).description(assignment.getDescription()).maxScore(assignment.getMaxScore()).dueDate(assignment.getDueDate()).orderIndex(assignment.getOrderIndex()).isPublished(assignment.getIsPublished()).createdAt(assignment.getCreatedAt()).updatedAt(assignment.getUpdatedAt()).attachments(attachmentService.getAttachmentsForEntity(assignmentId, EntityType.ASSIGNMENT, user)).build();
     }
 
     @Transactional
@@ -164,7 +170,6 @@ public class CourseService {
 
         CourseRole requesterRole = securityValidator.getUserRoleInCourse(courseId, requester);
 
-        // Cross-removal vs Self-removal logic
         if (!requester.getEmail().equals(targetEmail)) {
             if (requesterRole == CourseRole.STUDENT) {
                 throw new AppException("Access Denied: Students can only remove themselves", HttpStatus.FORBIDDEN);

@@ -1,5 +1,6 @@
 package com.nexuslearn.api.dtos;
 
+import com.nexuslearn.api.models.CourseRole;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,4 +18,5 @@ public class CourseResponse {
     private String creatorName;
     private String lastActivityMessage;
     private LocalDateTime lastActivityAt;
+    private CourseRole currentUserRole;
 }

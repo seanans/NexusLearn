@@ -23,9 +23,6 @@ public class Lesson extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "video_url", length = 1024)
-    private String videoUrl;
-
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 

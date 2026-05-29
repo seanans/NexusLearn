@@ -1,5 +1,4 @@
 -- V3__create_content_tables.sql
-
 CREATE TABLE modules
 (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),

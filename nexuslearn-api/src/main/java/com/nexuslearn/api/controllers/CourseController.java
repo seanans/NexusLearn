@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,22 +35,19 @@ public class CourseController {
 
     @GetMapping("/{courseId}/syllabus")
     public ResponseEntity<CourseSyllabusResponse> getCourseSyllabus(@PathVariable UUID courseId, @AuthenticationPrincipal CustomUserDetails userDetails) {
-
         CourseSyllabusResponse response = courseService.getCourseSyllabus(courseId, userDetails.user());
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{courseId}/lessons/{lessonId}")
-    public ResponseEntity<LessonSummaryProjection> getLessonById(@PathVariable UUID courseId, @PathVariable UUID lessonId, @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        LessonSummaryProjection response = courseService.getLessonById(courseId, lessonId, userDetails.user());
+    public ResponseEntity<LessonResponse> getLessonById(@PathVariable UUID courseId, @PathVariable UUID lessonId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        LessonResponse response = courseService.getLessonById(courseId, lessonId, userDetails.user());
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{courseId}/assignments/{assignmentId}")
-    public ResponseEntity<AssignmentSummaryProjection> getAssignmentById(@PathVariable UUID courseId, @PathVariable UUID assignmentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        AssignmentSummaryProjection response = courseService.getAssignmentById(courseId, assignmentId, userDetails.user());
+    public ResponseEntity<AssignmentResponse> getAssignmentById(@PathVariable UUID courseId, @PathVariable UUID assignmentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AssignmentResponse response = courseService.getAssignmentById(courseId, assignmentId, userDetails.user());
         return ResponseEntity.ok(response);
     }
 

@@ -30,4 +30,8 @@ public class AssignmentSubmission extends BaseEntity{
 
     @Column(columnDefinition = "TEXT")
     private String feedback;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "graded_by_id")
+    private User gradedBy;
 }

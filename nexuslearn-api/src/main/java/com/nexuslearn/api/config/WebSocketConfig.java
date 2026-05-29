@@ -31,9 +31,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-chat")
-                .setAllowedOrigins("*");
-                // .setAllowedOrigins("http://localhost:4200");
+        registry.addEndpoint("/ws-chat").setAllowedOrigins("*");
+        // .setAllowedOrigins("http://localhost:4200");
     }
 
     @Override
@@ -60,8 +59,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                             String email = tokenProvider.getEmailFromJwtToken(token);
                             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities());
+                            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
                             accessor.setUser(auth);
                         }

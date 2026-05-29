@@ -15,6 +15,7 @@ public class AddMemberToCourseRequest {
     @NotBlank
     @Email
     private String email;
+
     @NotNull(message = "Role is required")
     private CourseRole role;
 }
