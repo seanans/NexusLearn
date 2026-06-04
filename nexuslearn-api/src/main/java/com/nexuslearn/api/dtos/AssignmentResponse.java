@@ -18,7 +18,8 @@ public class AssignmentResponse {
     private Integer maxScore;
     private LocalDateTime dueDate;
     private Integer orderIndex;
-    private boolean isPublished;
+    private boolean published;
+    private LocalDateTime availableFrom;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<AttachmentResponse> attachments;

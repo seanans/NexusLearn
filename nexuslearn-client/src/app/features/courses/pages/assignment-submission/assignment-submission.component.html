@@ -1,0 +1,213 @@
+@if (viewData$ | async; as data) {
+  <div class="viewer-layout">
+
+    <header class="viewer-header">
+      <div class="header-main">
+        <nav class="breadcrumb">
+          <a routerLink="/courses">Courses</a>
+          <span class="separator">/</span>
+          <a [routerLink]="['/courses', data.courseId, 'syllabus']">Course Syllabus</a>
+          <span class="separator">/</span>
+          <span class="current">{{ data.assignment.title }}</span>
+        </nav>
+
+        <h1>
+          {{ data.assignment.title }}
+          @if (!data.assignment.published) {
+            <span class="badge-draft">Draft (Hidden)</span>
+          }
+        </h1>
+
+        <div class="assignment-meta">
+          <span class="meta-badge">Max Score: {{ data.assignment.maxScore }} pts</span>
+          <span class="meta-badge">Due: {{ data.assignment.dueDate | date:'medium' }}</span>
+        </div>
+      </div>
+
+      @if (data.role === CourseRole.TEACHER || data.role === CourseRole.ASSISTANT) {
+        <button class="btn-edit" [routerLink]="['/courses', data.courseId, 'assignments', data.assignment.id, 'edit']">
+          Edit Assignment
+        </button>
+      }
+    </header>
+
+    <main class="viewer-body">
+      <div class="assignment-description" style="white-space: pre-wrap;">{{ data.assignment.description }}</div>
+
+      @if (data.assignment.attachments && data.assignment.attachments.length > 0) {
+        <div class="assignment-materials">
+          <h3>Reference Materials</h3>
+          <app-attachment-gallery
+            [attachments]="data.assignment.attachments"
+            [allowDelete]="false">
+          </app-attachment-gallery>
+        </div>
+      }
+
+      <hr class="section-divider">
+
+      @if (data.role === CourseRole.STUDENT) {
+        <section class="student-zone">
+          <h3 class="zone-title">Your Submission</h3>
+
+          @if (data.submissions.length > 0 && !isResubmitting) {
+            @let sub = data.submissions[0];
+            <div class="submission-receipt">
+              <div class="receipt-header">
+                <span>Submitted: {{ sub.submittedAt | date:'medium' }}</span>
+                <span class="status-indicator" [ngClass]="{'late': sub.late, 'on-time': !sub.late}">
+                  {{ sub.late ? 'Late Submission' : 'On Time' }}
+                </span>
+              </div>
+
+              <div class="submitted-body">
+                <h5>Your Response:</h5>
+                <p class="raw-response">"{{ sub.submissionText }}"</p>
+
+                @if (sub.attachments && sub.attachments.length > 0) {
+                  <div style="margin-top: 1rem;">
+                    <h5>Attached Files:</h5>
+                    <app-attachment-gallery
+                      [attachments]="sub.attachments"
+                      [allowDelete]="false">
+                    </app-attachment-gallery>
+                  </div>
+                }
+              </div>
+
+              @if (sub.score !== null) {
+                <div class="evaluation-results">
+                  <h4>Grade Received: <span class="assigned-score">{{ sub.score }}</span> / {{ data.assignment.maxScore }}</h4>
+                  <p class="feedback-text"><strong>Teacher Feedback:</strong> {{ sub.feedback || 'No evaluation text left.' }}</p>
+                </div>
+              } @else {
+                <div class="pending-review">
+                  <span></span> Waiting for an instructor to review and score this work.
+                </div>
+              }
+
+              <div class="resubmit-action-wrapper">
+                <button class="btn-secondary-link" (click)="enableResubmission(sub.submissionText)">
+                  Resubmit Enhanced Solution
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="submission-form">
+              <label for="submissionText">Type your solution statement below:</label>
+              <textarea
+                id="submissionText"
+                [(ngModel)]="studentAnswer"
+                placeholder="Write your answer details..."
+                rows="8">
+              </textarea>
+
+              <div class="staging-area">
+                <h4>Attach Files</h4>
+
+                @if (stagedFiles.length > 0) {
+                  <ul class="staged-files-list">
+                    @for (file of stagedFiles; track file.fileName; let i = $index) {
+                      <li>
+                        <div><span style="margin-right: 8px;"></span> <span class="file-name">{{ file.fileName }}</span></div>
+                        <button class="btn-remove-staged" (click)="removeStagedFile(i)" title="Remove file">✕</button>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                <div class="upload-controls">
+                  <label class="custom-file-upload" [class.disabled]="isUploadingFile">
+                    <input
+                      type="file"
+                      (change)="onFileSelectedForSubmission($event)"
+                      [disabled]="isUploadingFile"
+                      accept=".pdf,.doc,.docx,.png,.jpg,.mp4,.zip"
+                    />
+                    {{ isUploadingFile ? 'Uploading...' : '+ Add File' }}
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                @if (isResubmitting) {
+                  <button class="btn-cancel" (click)="isResubmitting = false">Cancel</button>
+                }
+                <button
+                  class="btn-submit"
+                  (click)="submitWork(data.assignment.id)"
+                  [disabled]="isUploadingFile || (!studentAnswer.trim() && stagedFiles.length === 0)">
+                  {{ isResubmitting ? 'Submit Overwritten Version' : 'Submit Work' }}
+                </button>
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      @if (data.role === CourseRole.TEACHER || data.role === CourseRole.ASSISTANT) {
+        <section class="management-zone">
+          <h3 class="zone-title">Incoming Submissions ({{ data.submissions.length }})</h3>
+
+          <div class="submissions-dashboard-list">
+            @for (sub of data.submissions; track sub.id) {
+              <div class="grading-card" [class.graded]="sub.score !== null">
+                <div class="card-meta">
+                  <span class="student-identifier">Student: <strong>{{ sub.studentName }}</strong></span>
+                  <span class="timeline" [class.late-flag]="sub.late">
+                    Submitted: {{ sub.submittedAt | date:'short' }} {{ sub.late ? '(LATE)' : '' }}
+                  </span>
+                </div>
+
+                <div class="student-text-block">
+                  <p>"{{ sub.submissionText }}"</p>
+
+                  @if (sub.attachments && sub.attachments.length > 0) {
+                    <div style="margin-top: 1rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
+                      <strong style="font-size: 0.9rem; color: #475569; display: block; margin-bottom: 0.5rem;">Student Files:</strong>
+                      <app-attachment-gallery
+                        [attachments]="sub.attachments"
+                        [allowDelete]="false">
+                      </app-attachment-gallery>
+                    </div>
+                  }
+                </div>
+
+                <div class="grading-action-panel">
+                  <div class="input-row">
+                    <div class="input-group score-input">
+                      <label>Score (Max {{ data.assignment.maxScore }}):</label>
+                      <input
+                        type="number"
+                        [min]="0"
+                        [max]="data.assignment.maxScore"
+                        [(ngModel)]="gradingScores[sub.id]">
+                    </div>
+
+                    <div class="input-group feedback-input">
+                      <label>Feedback:</label>
+                      <input
+                        type="text"
+                        placeholder="Type correction suggestions..."
+                        [(ngModel)]="gradingFeedbacks[sub.id]">
+                    </div>
+                  </div>
+
+                  <button class="btn-grade-save" (click)="submitGrade(sub.id)">
+                    {{ sub.score !== null ? 'Update Grade' : 'Save Evaluation' }}
+                  </button>
+                </div>
+              </div>
+            }
+            @if (data.submissions.length === 0) {
+              <div class="dashboard-empty">No student solutions have been submitted yet.</div>
+            }
+          </div>
+        </section>
+      }
+
+    </main>
+  </div>
+} @else {
+  <div class="spinner-loading">Loading assignment workspace context...</div>
+}

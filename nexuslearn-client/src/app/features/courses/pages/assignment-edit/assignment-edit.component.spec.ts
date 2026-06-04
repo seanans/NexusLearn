@@ -1,0 +1,22 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { AssignmentEditComponent } from './assignment-edit.component';
+
+describe('AssignmentEditComponent', () => {
+  let component: AssignmentEditComponent;
+  let fixture: ComponentFixture<AssignmentEditComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AssignmentEditComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(AssignmentEditComponent);
+    component = fixture.componentInstance;
+    await fixture.whenStable();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});

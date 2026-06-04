@@ -1,13 +1,11 @@
 package com.nexuslearn.api.services;
 
-import com.nexuslearn.api.dtos.AssignmentCreateRequest;
-import com.nexuslearn.api.dtos.AssignmentResponse;
-import com.nexuslearn.api.dtos.AssignmentUpdateRequest;
-import com.nexuslearn.api.dtos.AttachmentResponse;
+import com.nexuslearn.api.dtos.*;
 import com.nexuslearn.api.exceptions.AppException;
 import com.nexuslearn.api.models.*;
 import com.nexuslearn.api.models.Module;
 import com.nexuslearn.api.repositories.AssignmentRepository;
+import com.nexuslearn.api.repositories.AttachmentRepository;
 import com.nexuslearn.api.repositories.ModuleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +24,7 @@ public class AssignmentService {
     private final ModuleRepository moduleRepository;
     private final CourseSecurityValidator securityValidator;
     private final AttachmentService attachmentService;
+    private final AttachmentRepository attachmentRepository;
 
     @Transactional
     public UUID createAssignment(UUID moduleId, AssignmentCreateRequest request, User user) {
@@ -72,7 +71,8 @@ public class AssignmentService {
                 .maxScore(a.getMaxScore())
                 .dueDate(a.getDueDate())
                 .orderIndex(a.getOrderIndex())
-                .isPublished(a.getIsPublished())
+                .published(a.getIsPublished())
+                .availableFrom(a.getAvailableFrom())
                 .createdAt(a.getCreatedAt())
                 .updatedAt(a.getUpdatedAt())
                 .build()).collect(Collectors.toList());
@@ -88,8 +88,23 @@ public class AssignmentService {
         assignment.setDescription(request.getDescription());
         assignment.setMaxScore(request.getMaxScore());
         assignment.setDueDate(request.getDueDate());
+        assignment.setAvailableFrom(request.getAvailableFrom());
+        assignment.setIsPublished(request.getIsPublished());
 
         assignmentRepository.save(assignment);
+
+        if (request.getNewAttachments() != null && !request.getNewAttachments().isEmpty()) {
+            for (PendingAttachmentDto stagedFile : request.getNewAttachments()) {
+                Attachment newAttachment = new Attachment();
+                newAttachment.setEntityId(assignment.getId());
+                newAttachment.setEntityType(EntityType.ASSIGNMENT);
+                newAttachment.setFileUrl(stagedFile.getFileUrl());
+                newAttachment.setFileName(stagedFile.getFileName());
+                newAttachment.setFileType(stagedFile.getFileType());
+
+                attachmentRepository.save(newAttachment);
+            }
+        }
     }
 
     @Transactional
@@ -104,19 +119,21 @@ public class AssignmentService {
 
     @Transactional
     public void deleteAssignment(UUID assignmentId, User user) {
-        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId).orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
+        Assignment assignment = assignmentRepository.findByIdWithCourseContext(assignmentId)
+                .orElseThrow(() -> new AppException("Assignment not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAccess(assignment.getModule().getCourse().getId(), user, true);
+
         for (AssignmentSubmission submission : assignment.getSubmissions()) {
             List<AttachmentResponse> subAttachments = attachmentService.getAttachmentsForEntity(submission.getId(), EntityType.SUBMISSION, user);
             for (AttachmentResponse attachment : subAttachments) {
-                attachmentService.deleteAttachment(attachment.getId(), user);
+                attachmentService.deleteAttachmentAsSystem(attachment.getId());
             }
         }
 
         List<AttachmentResponse> assignmentAttachments = attachmentService.getAttachmentsForEntity(assignmentId, EntityType.ASSIGNMENT, user);
         for (AttachmentResponse attachment : assignmentAttachments) {
-            attachmentService.deleteAttachment(attachment.getId(), user);
+            attachmentService.deleteAttachmentAsSystem(attachment.getId());
         }
 
         assignmentRepository.delete(assignment);

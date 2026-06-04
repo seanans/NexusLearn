@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,6 +24,11 @@ public class AssignmentUpdateRequest {
     private Integer maxScore;
 
     @NotNull(message = "Due date is required")
-    @Future(message = "Due date must be in the future")
     private LocalDateTime dueDate;
+
+    private LocalDateTime availableFrom;
+
+    private Boolean isPublished;
+
+    private List<PendingAttachmentDto> newAttachments = new ArrayList<>();
 }
