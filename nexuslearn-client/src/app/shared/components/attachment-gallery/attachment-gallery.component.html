@@ -1,0 +1,27 @@
+<div class="gallery-container">
+  @for (file of attachments; track file.id) {
+    <div class="attachment-item">
+
+      @if (file.fileType === 'IMAGE') {
+        <img [src]="file.fileUrl" [alt]="file.fileName" class="media-preview"/>
+      }
+      @else if (file.fileType === 'VIDEO') {
+        <video controls class="media-preview">
+          <source [src]="file.fileUrl">
+          Your browser does not support the video tag.
+        </video>
+      }
+      @else {
+        <div class="document-card">
+          <span class="file-icon">📄</span>
+          <span class="file-name" [title]="file.fileName">{{ file.fileName }}</span>
+          <a [href]="file.fileUrl" target="_blank" class="btn-download" rel="noopener noreferrer">Download</a>
+        </div>
+      }
+
+      @if (allowDelete) {
+        <button class="btn-delete" (click)="onDelete(file.id)" title="Delete File">✕</button>
+      }
+    </div>
+  }
+</div>

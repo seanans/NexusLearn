@@ -1,0 +1,19 @@
+<div class="uploader-wrapper" [class.uploading]="isUploading">
+  <div class="upload-controls">
+    <label class="custom-file-upload" [class.disabled]="isUploading">
+      <input
+        type="file"
+        (change)="onFileSelected($event)"
+        [disabled]="isUploading"
+        accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.mp4,.zip,.rar"
+      />
+      {{ isUploading ? 'Uploading...' : 'Choose File to Upload' }}
+    </label>
+  </div>
+
+  @if (isUploading) {
+    <div class="upload-status">
+      <span class="spinner">↻</span> Uploading securely to cloud...
+    </div>
+  }
+</div>

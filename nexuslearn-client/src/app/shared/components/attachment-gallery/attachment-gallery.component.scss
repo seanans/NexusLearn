@@ -1,0 +1,77 @@
+.gallery-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.attachment-item {
+  position: relative;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: #fff;
+  max-width: 320px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.media-preview {
+  width: 100%;
+  border-radius: 4px;
+  max-height: 200px;
+  object-fit: cover;
+  background: #f5f5f5;
+}
+
+.document-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+}
+
+.file-icon {
+  font-size: 1.5rem;
+}
+
+.file-name {
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+  font-weight: 500;
+}
+
+.btn-download {
+  background: #1565c0;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: bold;
+  transition: background 0.2s;
+
+  &:hover { background: #0d47a1; }
+}
+
+.btn-delete {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+
+  &:hover { background: #b71c1c; }
+}

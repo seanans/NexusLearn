@@ -26,4 +26,11 @@ public class FileController {
         PresignedUrlResponse response = fileStorageService.generatePreSignedUploadUrl(fileName, entityId, entityType, userDetails.user());
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/staged-upload-url")
+    public ResponseEntity<PresignedUrlResponse> getStagedUploadTicket(
+            @RequestParam String fileName,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(fileStorageService.generateStagedPreSignedUploadUrl(fileName));
+    }
 }

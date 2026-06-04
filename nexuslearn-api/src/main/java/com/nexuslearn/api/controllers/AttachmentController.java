@@ -22,14 +22,12 @@ public class AttachmentController {
 
     @PostMapping
     public ResponseEntity<AttachmentResponse> linkAttachment(@Valid @RequestBody AttachmentCreateRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
-
         AttachmentResponse response = attachmentService.linkAttachment(request, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @DeleteMapping("/{attachmentId}")
     public ResponseEntity<Void> deleteAttachment(@PathVariable UUID attachmentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
-
         attachmentService.deleteAttachment(attachmentId, userDetails.user());
         return ResponseEntity.noContent().build();
     }

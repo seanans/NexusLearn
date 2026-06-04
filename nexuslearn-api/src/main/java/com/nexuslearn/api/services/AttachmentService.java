@@ -26,16 +26,9 @@ public class AttachmentService {
 
     @Transactional
     public AttachmentResponse linkAttachment(AttachmentCreateRequest request, User user) {
-
         securityValidator.validateAttachmentUpload(request.getEntityId(), request.getEntityType(), user);
 
-        Attachment attachment = Attachment.builder()
-                .entityId(request.getEntityId())
-                .entityType(request.getEntityType())
-                .fileUrl(request.getFileUrl())
-                .fileName(request.getFileName())
-                .fileType(request.getFileType())
-                .build();
+        Attachment attachment = Attachment.builder().entityId(request.getEntityId()).entityType(request.getEntityType()).fileUrl(request.getFileUrl()).fileName(request.getFileName()).fileType(request.getFileType()).build();
 
         attachment = attachmentRepository.save(attachment);
         return mapToResponse(attachment);
@@ -44,36 +37,40 @@ public class AttachmentService {
     public List<AttachmentResponse> getAttachmentsForEntity(UUID entityId, EntityType entityType, User currentUser) {
         securityValidator.validateAttachmentView(entityId, entityType, currentUser);
 
-        return attachmentRepository.findByEntityIdAndEntityType(entityId, entityType)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        return attachmentRepository.findByEntityIdAndEntityType(entityId, entityType).stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     @Transactional
     public void deleteAttachment(UUID attachmentId, User currentUser) {
-        Attachment attachment = attachmentRepository.findById(attachmentId)
-                .orElseThrow(() -> new AppException("Attachment not found", HttpStatus.NOT_FOUND));
+        Attachment attachment = attachmentRepository.findById(attachmentId).orElseThrow(() -> new AppException("Attachment not found", HttpStatus.NOT_FOUND));
 
         securityValidator.validateAttachmentUpload(attachment.getEntityId(), attachment.getEntityType(), currentUser);
 
-        fileStorageService.deleteFile(attachment.getFileUrl());
+        String objectName = extractObjectName(attachment.getFileUrl());
+        fileStorageService.deleteFile(objectName);
+        attachmentRepository.delete(attachment);
+    }
+
+    @Transactional
+    public void deleteAttachmentAsSystem(UUID attachmentId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId).orElseThrow(() -> new AppException("Attachment not found", HttpStatus.NOT_FOUND));
+        String objectName = extractObjectName(attachment.getFileUrl());
+        fileStorageService.deleteFile(objectName);
         attachmentRepository.delete(attachment);
     }
 
     private AttachmentResponse mapToResponse(Attachment attachment) {
-        String objectName = attachment.getFileUrl().substring(attachment.getFileUrl().lastIndexOf("/") + 1);
-
+        String fullUrl = attachment.getFileUrl();
+        String[] urlParts = fullUrl.split("nexuslearn-files/");
+        String objectName = urlParts.length > 1 ? urlParts[1] : fullUrl.substring(fullUrl.lastIndexOf("/") + 1);
         String secureReadUrl = fileStorageService.generatePreSignedDownloadUrl(objectName);
 
-        return AttachmentResponse.builder()
-                .id(attachment.getId())
-                .entityId(attachment.getEntityId())
-                .entityType(attachment.getEntityType())
-                .fileUrl(secureReadUrl)
-                .fileName(attachment.getFileName())
-                .fileType(attachment.getFileType())
-                .createdAt(attachment.getCreatedAt())
-                .build();
+        return AttachmentResponse.builder().id(attachment.getId()).entityId(attachment.getEntityId()).entityType(attachment.getEntityType()).fileUrl(secureReadUrl).fileName(attachment.getFileName()).fileType(attachment.getFileType()).createdAt(attachment.getCreatedAt()).build();
+    }
+
+    private String extractObjectName(String fullUrl) {
+        if (fullUrl == null) return "";
+        String[] urlParts = fullUrl.split("nexuslearn-files/");
+        return urlParts.length > 1 ? urlParts[1] : fullUrl.substring(fullUrl.lastIndexOf("/") + 1);
     }
 }

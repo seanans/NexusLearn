@@ -67,6 +67,28 @@ public class FileStorageService {
         }
     }
 
+    public PresignedUrlResponse generateStagedPreSignedUploadUrl(String fileName) {
+        try {
+            String objectName = "staged/" + UUID.randomUUID() + "-" + fileName;
+
+            String presignedUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.PUT)
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .expiry(15, TimeUnit.MINUTES)
+                            .build()
+            );
+
+            String finalFileUrl = minioBaseUrl + "/" + bucketName + "/" + objectName;
+
+            return new PresignedUrlResponse(presignedUrl, finalFileUrl, objectName);
+
+        } catch (Exception e) {
+            throw new AppException("Failed to generate secure staged upload ticket", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public String generatePreSignedDownloadUrl(String objectName) {
         try {
             return minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.GET).bucket(bucketName).object(objectName).expiry(1, TimeUnit.HOURS).build());
