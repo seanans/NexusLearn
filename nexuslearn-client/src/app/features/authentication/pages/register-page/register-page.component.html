@@ -1,0 +1,61 @@
+<div class="auth-container">
+  <div class="auth-card" style="max-width: 440px;">
+    <div class="auth-header">
+      <h1>Create an Account</h1>
+      <p>Join NexusLearn to start building your courses.</p>
+    </div>
+
+    @if (errorMessage) {
+      <div class="alert-error">{{ errorMessage }}</div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <div style="display: flex; gap: 1rem;">
+        <div class="form-group" style="flex: 1;">
+          <label>First Name</label>
+          <input type="text" formControlName="firstName" class="form-control" [class.is-invalid]="registerForm.get('firstName')?.touched && registerForm.get('firstName')?.invalid">
+          @if (registerForm.get('firstName')?.touched && registerForm.get('firstName')?.hasError('required')) {
+            <span class="validation-text">Required</span>
+          }
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Last Name</label>
+          <input type="text" formControlName="lastName" class="form-control" [class.is-invalid]="registerForm.get('lastName')?.touched && registerForm.get('lastName')?.invalid">
+          @if (registerForm.get('lastName')?.touched && registerForm.get('lastName')?.hasError('required')) {
+            <span class="validation-text">Required</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" formControlName="email" class="form-control" [class.is-invalid]="registerForm.get('email')?.touched && registerForm.get('email')?.invalid" placeholder="student@example.com">
+        @if (registerForm.get('email')?.touched && registerForm.get('email')?.hasError('required')) {
+          <span class="validation-text">Email is required</span>
+        }
+        @if (registerForm.get('email')?.touched && registerForm.get('email')?.hasError('email')) {
+          <span class="validation-text">Please enter a valid email</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" formControlName="password" class="form-control" [class.is-invalid]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid" placeholder="At least 6 characters">
+        @if (registerForm.get('password')?.touched && registerForm.get('password')?.hasError('required')) {
+          <span class="validation-text">Password is required</span>
+        }
+        @if (registerForm.get('password')?.touched && registerForm.get('password')?.hasError('minlength')) {
+          <span class="validation-text">Password must be at least 6 characters</span>
+        }
+      </div>
+
+      <button type="submit" class="btn-submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Creating Account...' : 'Sign Up' }}
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a routerLink="/login">Log in here</a>
+    </div>
+  </div>
+</div>
