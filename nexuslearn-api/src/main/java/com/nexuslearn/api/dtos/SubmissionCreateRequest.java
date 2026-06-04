@@ -12,4 +12,5 @@ import java.util.List;
 public class SubmissionCreateRequest {
     @NotBlank(message = "Submission text cannot be empty")
     private String submissionText;
+    private List<PendingAttachmentDto> attachments = new ArrayList<>();
 }

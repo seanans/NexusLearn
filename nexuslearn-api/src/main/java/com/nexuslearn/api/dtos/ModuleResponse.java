@@ -15,7 +15,7 @@ public class ModuleResponse {
     private String title;
     private String description;
     private Integer orderIndex;
-    private Boolean isPublished;
+    private Boolean published;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -1,5 +1,6 @@
 package com.nexuslearn.api.services;
 
+import com.nexuslearn.api.dtos.PendingAttachmentDto;
 import com.nexuslearn.api.dtos.SubmissionCreateRequest;
 import com.nexuslearn.api.dtos.SubmissionGradeRequest;
 import com.nexuslearn.api.dtos.SubmissionResponse;
@@ -7,6 +8,7 @@ import com.nexuslearn.api.exceptions.AppException;
 import com.nexuslearn.api.models.*;
 import com.nexuslearn.api.repositories.AssignmentRepository;
 import com.nexuslearn.api.repositories.AssignmentSubmissionRepository;
+import com.nexuslearn.api.repositories.AttachmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class SubmissionService {
     private final AssignmentRepository assignmentRepository;
     private final CourseSecurityValidator securityValidator;
     private final AttachmentService attachmentService;
+    private final AttachmentRepository attachmentRepository;
 
     @Transactional
     public SubmissionResponse submitAssignment(UUID assignmentId, SubmissionCreateRequest request, User user) {
@@ -42,7 +45,19 @@ public class SubmissionService {
         submission.setScore(null);
         submission.setFeedback(null);
         submission = submissionRepository.save(submission);
+        if (request.getAttachments() != null && !request.getAttachments().isEmpty()) {
+            attachmentRepository.deleteByEntityIdAndEntityType(submission.getId(), EntityType.SUBMISSION);
+            for (PendingAttachmentDto stagedFile : request.getAttachments()) {
+                Attachment newAttachment = new Attachment();
+                newAttachment.setEntityId(submission.getId());
+                newAttachment.setEntityType(EntityType.SUBMISSION);
+                newAttachment.setFileUrl(stagedFile.getFileUrl());
+                newAttachment.setFileName(stagedFile.getFileName());
+                newAttachment.setFileType(stagedFile.getFileType());
 
+                attachmentRepository.save(newAttachment);
+            }
+        }
         return mapToResponse(submission, user);
     }
 
@@ -94,11 +109,12 @@ public class SubmissionService {
                 .id(submission.getId())
                 .assignmentId(submission.getAssignment().getId())
                 .userId(submission.getUser().getId())
+                .studentName(submission.getUser().getFirstName() + " " + submission.getUser().getLastName())
                 .submissionText(submission.getSubmissionText())
                 .score(submission.getScore())
                 .feedback(submission.getFeedback())
                 .submittedAt(submission.getUpdatedAt())
-                .isLate(isLate)
+                .late(isLate)
                 .gradedBy(submission.getGradedBy() != null ? submission.getGradedBy().getId() : null)
                 .attachments(attachmentService.getAttachmentsForEntity(submission.getId(), EntityType.SUBMISSION, user))
                 .build();

@@ -39,7 +39,7 @@ public class ModuleService {
 
         module = moduleRepository.save(module);
 
-        return ModuleResponse.builder().id(module.getId()).title(module.getTitle()).description(module.getDescription()).orderIndex(module.getOrderIndex()).isPublished(module.getIsPublished()).createdAt(module.getCreatedAt()).updatedAt(module.getUpdatedAt()).build();
+        return ModuleResponse.builder().id(module.getId()).title(module.getTitle()).description(module.getDescription()).orderIndex(module.getOrderIndex()).published(module.getIsPublished()).createdAt(module.getCreatedAt()).updatedAt(module.getUpdatedAt()).build();
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +64,7 @@ public class ModuleService {
         module.setIsPublished(request.getIsPublished());
 
         module = moduleRepository.save(module);
-        return ModuleResponse.builder().id(module.getId()).title(module.getTitle()).description(module.getDescription()).orderIndex(module.getOrderIndex()).isPublished(module.getIsPublished()).createdAt(module.getCreatedAt()).updatedAt(module.getUpdatedAt()).build();
+        return ModuleResponse.builder().id(module.getId()).title(module.getTitle()).description(module.getDescription()).orderIndex(module.getOrderIndex()).published(module.getIsPublished()).createdAt(module.getCreatedAt()).updatedAt(module.getUpdatedAt()).build();
     }
 
     @Transactional

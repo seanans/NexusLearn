@@ -15,11 +15,12 @@ public class SubmissionResponse {
     private UUID id;
     private UUID assignmentId;
     private UUID userId;
+    private String studentName;
     private String submissionText;
     private Integer score;
     private String feedback;
     private LocalDateTime submittedAt;
-    private boolean isLate;
+    private boolean late;
     private UUID gradedBy;
     private List<AttachmentResponse> attachments;
 }
