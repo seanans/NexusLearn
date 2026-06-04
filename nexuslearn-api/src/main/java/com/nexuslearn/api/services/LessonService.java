@@ -1,15 +1,10 @@
 package com.nexuslearn.api.services;
 
-import com.nexuslearn.api.dtos.AttachmentResponse;
-import com.nexuslearn.api.dtos.LessonCreateRequest;
-import com.nexuslearn.api.dtos.LessonResponse;
-import com.nexuslearn.api.dtos.LessonUpdateRequest;
+import com.nexuslearn.api.dtos.*;
 import com.nexuslearn.api.exceptions.AppException;
-import com.nexuslearn.api.models.CourseRole;
-import com.nexuslearn.api.models.EntityType;
-import com.nexuslearn.api.models.Lesson;
+import com.nexuslearn.api.models.*;
 import com.nexuslearn.api.models.Module;
-import com.nexuslearn.api.models.User;
+import com.nexuslearn.api.repositories.AttachmentRepository;
 import com.nexuslearn.api.repositories.LessonRepository;
 import com.nexuslearn.api.repositories.ModuleRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +23,7 @@ public class LessonService {
     private final ModuleRepository moduleRepository;
     private final CourseSecurityValidator securityValidator;
     private final AttachmentService attachmentService;
+    private final AttachmentRepository attachmentRepository;
 
     @Transactional
     public UUID createLesson(UUID moduleId, LessonCreateRequest request, User user) {
@@ -36,14 +32,7 @@ public class LessonService {
 
         Integer nextOrderIndex = lessonRepository.findMaxOrderIndexByModuleId(moduleId) + 1;
 
-        Lesson lesson = Lesson.builder()
-                .module(module)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .orderIndex(nextOrderIndex)
-                .isPublished(request.getIsPublished() != null ? request.getIsPublished() : false)
-                .availableFrom(request.getAvailableFrom())
-                .build();
+        Lesson lesson = Lesson.builder().module(module).title(request.getTitle()).content(request.getContent()).orderIndex(nextOrderIndex).isPublished(request.getIsPublished() != null ? request.getIsPublished() : false).availableFrom(request.getAvailableFrom()).build();
 
         lessonRepository.save(lesson);
         return lesson.getId();
@@ -60,6 +49,19 @@ public class LessonService {
         lesson.setAvailableFrom(request.getAvailableFrom());
 
         lessonRepository.save(lesson);
+
+        if (request.getNewAttachments() != null && !request.getNewAttachments().isEmpty()) {
+            for (PendingAttachmentDto stagedFile : request.getNewAttachments()) {
+                Attachment newAttachment = new Attachment();
+                newAttachment.setEntityId(lesson.getId());
+                newAttachment.setEntityType(EntityType.LESSON);
+                newAttachment.setFileUrl(stagedFile.getFileUrl());
+                newAttachment.setFileName(stagedFile.getFileName());
+                newAttachment.setFileType(stagedFile.getFileType());
+
+                attachmentRepository.save(newAttachment);
+            }
+        }
     }
 
     @Transactional
@@ -68,9 +70,8 @@ public class LessonService {
         securityValidator.validateAccess(lesson.getModule().getCourse().getId(), user, true);
         List<AttachmentResponse> attachments = attachmentService.getAttachmentsForEntity(lessonId, EntityType.LESSON, user);
         for (AttachmentResponse attachment : attachments) {
-            attachmentService.deleteAttachment(attachment.getId(), user);
+            attachmentService.deleteAttachmentAsSystem(attachment.getId());
         }
-
         lessonRepository.delete(lesson);
     }
 
@@ -92,15 +93,8 @@ public class LessonService {
             throw new AppException("Access Denied: This module is unpublished", HttpStatus.FORBIDDEN);
         }
 
-        List<Lesson> lessons = (userRole == CourseRole.TEACHER || userRole == CourseRole.ASSISTANT)
-                ? lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId)
-                : lessonRepository.findVisibleLessonsForStudent(moduleId);
+        List<Lesson> lessons = (userRole == CourseRole.TEACHER || userRole == CourseRole.ASSISTANT) ? lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId) : lessonRepository.findVisibleLessonsForStudent(moduleId);
 
-        return lessons.stream().map(l -> LessonResponse.builder()
-                .id(l.getId())
-                .title(l.getTitle())
-                .orderIndex(l.getOrderIndex())
-                .isPublished(l.getIsPublished())
-                .build()).collect(Collectors.toList());
+        return lessons.stream().map(l -> LessonResponse.builder().id(l.getId()).title(l.getTitle()).content(l.getContent()).orderIndex(l.getOrderIndex()).published(l.getIsPublished()).availableFrom(l.getAvailableFrom()).createdAt(l.getCreatedAt()).updatedAt(l.getUpdatedAt()).build()).collect(Collectors.toList());
     }
 }

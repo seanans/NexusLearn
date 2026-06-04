@@ -16,7 +16,8 @@ public class LessonResponse {
     private String title;
     private String content;
     private Integer orderIndex;
-    private boolean isPublished;
+    private boolean published;
+    private LocalDateTime availableFrom;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<AttachmentResponse> attachments;

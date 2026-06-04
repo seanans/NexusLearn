@@ -1,0 +1,42 @@
+@if (viewData$ | async; as view) {
+  <div class="viewer-layout">
+    <header class="viewer-header">
+      <div class="header-main">
+        <nav class="breadcrumb" style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #64748b;">
+          <a routerLink="/courses" style="color: #3b82f6; text-decoration: none; font-weight: 500;">Courses</a>
+          <span style="margin: 0 6px; color: #cbd5e1;">/</span>
+          <a [routerLink]="['/courses', view.courseId, 'syllabus']" style="color: #3b82f6; text-decoration: none; font-weight: 500;">Course Syllabus</a>
+          <span style="margin: 0 6px; color: #cbd5e1;">/</span>
+          <span>{{ view.lesson.title }}</span>
+        </nav>
+        <h1>
+          {{ view.lesson.title }}
+          @if (!view.lesson.published) {
+            <span class="badge-draft">Draft (Hidden)</span>
+          }
+        </h1>
+      </div>
+
+      @if (view.role === CourseRole.TEACHER || view.role === CourseRole.ASSISTANT) {
+        <button class="btn-edit" [routerLink]="['/courses', view.courseId, 'lessons', view.lesson.id, 'edit']">
+          Edit Lesson
+        </button>
+      }
+    </header>
+
+    <main class="viewer-body">
+      <div class="lesson-content" [innerHTML]="view.lesson.content"></div>
+
+      <hr class="section-divider" />
+
+      <section class="lesson-attachments">
+        <h3>Course Materials</h3>
+        @if (view.lesson.attachments && view.lesson.attachments.length > 0) {
+          <app-attachment-gallery [attachments]="view.lesson.attachments" [allowDelete]="false"></app-attachment-gallery>
+        } @else {
+          <p class="no-files">No files attached to this lesson.</p>
+        }
+      </section>
+    </main>
+  </div>
+}

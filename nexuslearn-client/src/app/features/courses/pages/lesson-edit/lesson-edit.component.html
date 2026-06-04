@@ -1,0 +1,98 @@
+<div class="editor-layout">
+  <header class="editor-header">
+    <div class="header-titles">
+      <h1>Edit Details</h1>
+      <span class="subtitle">Update the content, availability, and course materials</span>
+    </div>
+    <div class="publish-toggle-wrapper" [class.published]="isPublished">
+      <span class="status-text">Publish to Students</span>
+      <label class="toggle-switch">
+        <input type="checkbox" [(ngModel)]="isPublished">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </header>
+
+  <main class="editor-body">
+    <section class="editor-section">
+      <h2>Lesson Details</h2>
+      <div class="form-group">
+        <label>Lesson Title <span class="required">*</span></label>
+        <input type="text" [(ngModel)]="title" class="form-control" placeholder="e.g., Introduction to the framework">
+      </div>
+      <div class="form-group">
+        <label>Lesson Content (HTML/Text)</label>
+        <textarea [(ngModel)]="content" class="form-control" placeholder="Write the main lecture content here..."></textarea>
+      </div>
+    </section>
+
+    <section class="editor-section">
+      <h2>Schedule Restrictions</h2>
+      <div class="form-grid">
+        <div class="form-group" style="max-width: 300px;">
+          <label>Available From (Optional)</label>
+          <input type="datetime-local" [(ngModel)]="availableFrom" class="form-control">
+        </div>
+      </div>
+    </section>
+
+    <section class="editor-section">
+      <h2>Course Materials</h2>
+
+      @if (existingAttachments.length > 0) {
+        <div class="existing-files">
+          <label class="section-label">Currently Attached</label>
+          <div class="file-grid">
+            @for (file of existingAttachments; track file.id; let i = $index) {
+              <div class="file-card">
+                <div class="file-info">
+                  <span class="file-icon">📄</span>
+                  <span class="file-name" [title]="file.fileName">{{ file.fileName }}</span>
+                </div>
+                <button class="icon-btn-danger" (click)="deleteExistingAttachment(file.id, i)" title="Delete File">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="upload-zone">
+        <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none">
+        <div class="upload-prompt" (click)="fileInput.click()">
+          <div class="upload-icon">⬆️</div>
+          <p><strong>Click to browse</strong> and select a file to attach.</p>
+          <span class="upload-hint">{{ isUploadingFile ? 'Uploading to secure vault...' : 'Supports PDF, DOCX, ZIP, JPG, MP4' }}</span>
+        </div>
+      </div>
+
+      @if (stagedFiles.length > 0) {
+        <div class="staged-files">
+          <label class="section-label">Staged for Upload (Save to confirm)</label>
+          <ul class="staged-list">
+            @for (staged of stagedFiles; track $index) {
+              <li>
+                <span><span style="margin-right: 8px;">⏳</span> {{ staged.fileName }}</span>
+                <button class="remove-btn" (click)="removeStagedFile($index)">Remove</button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+  </main>
+
+  <footer class="editor-footer">
+    <button class="btn-danger-outline" (click)="deleteLesson()">
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      Delete Lesson
+    </button>
+    <div class="footer-actions-right">
+      <button class="btn-cancel" (click)="cancel()">Cancel</button>
+      <button class="btn-save" (click)="saveChanges()" [disabled]="isUploadingFile">
+        Save Changes
+      </button>
+    </div>
+  </footer>
+</div>

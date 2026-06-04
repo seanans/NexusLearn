@@ -18,38 +18,37 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/modules/{moduleId}/lessons")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class LessonController {
 
     private final LessonService lessonService;
 
-    @PostMapping
+    @PostMapping("/modules/{moduleId}/lessons")
     public ResponseEntity<Map<String, UUID>> createLesson(@PathVariable UUID moduleId, @Valid @RequestBody LessonCreateRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         UUID lessonId = lessonService.createLesson(moduleId, request, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", lessonId));
     }
 
-    @GetMapping
+    @GetMapping("/modules/{moduleId}/lessons")
     public ResponseEntity<List<LessonResponse>> getLessons(@PathVariable UUID moduleId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(lessonService.getLessonsByModule(moduleId, userDetails.user()));
     }
 
-    @PutMapping("/{lessonId}")
-    public ResponseEntity<Void> updateLesson(@PathVariable UUID moduleId, @PathVariable UUID lessonId, @Valid @RequestBody LessonUpdateRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    @PutMapping("/lessons/{lessonId}")
+    public ResponseEntity<Void> updateLesson(@PathVariable UUID lessonId, @Valid @RequestBody LessonUpdateRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         lessonService.updateLesson(lessonId, request, userDetails.user());
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/{lessonId}/publish")
-    public ResponseEntity<Void> updatePublishStatus(@PathVariable UUID moduleId, @PathVariable UUID lessonId, @Valid @RequestBody PublishStatusRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
-
+    @PatchMapping("/lessons/{lessonId}/publish")
+    public ResponseEntity<Void> updatePublishStatus(@PathVariable UUID lessonId, @Valid @RequestBody PublishStatusRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         lessonService.updateLessonPublishStatus(lessonId, request.getIsPublished(), userDetails.user());
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{lessonId}")
-    public ResponseEntity<Void> deleteLesson(@PathVariable UUID moduleId, @PathVariable UUID lessonId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    @DeleteMapping("/lessons/{lessonId}")
+    public ResponseEntity<Void> deleteLesson(@PathVariable UUID lessonId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         lessonService.deleteLesson(lessonId, userDetails.user());
         return ResponseEntity.noContent().build();
     }
