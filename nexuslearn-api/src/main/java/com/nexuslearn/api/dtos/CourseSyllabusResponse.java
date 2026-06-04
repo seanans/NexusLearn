@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record CourseSyllabusResponse(UUID courseId, List<SyllabusModuleDto> modules) {
     // Nested Module Record
-    public record SyllabusModuleDto(UUID moduleId, String title, Integer orderIndex, List<SyllabusItemDto> items) {
+    public record SyllabusModuleDto(UUID moduleId, String title, String description, boolean published, Integer orderIndex, List<SyllabusItemDto> items) {
     }
 
     // Nested Item Record

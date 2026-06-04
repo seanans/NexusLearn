@@ -1,0 +1,17 @@
+<mat-toolbar color="primary" class="mat-elevation-z4">
+  <div class="logo-container" routerLink="/">
+    <mat-icon>school</mat-icon>
+    <span class="brand-name">NexusLearn</span>
+  </div>
+
+  <span class="spacer"></span>
+
+  @if (!authService.isAuthenticated()) {
+    <button mat-button routerLink="/login">Login</button>
+  } @else {
+    <button mat-button routerLink="/courses">Dashboard</button>
+    <button mat-icon-button (click)="logout()" aria-label="Logout">
+      <mat-icon>logout</mat-icon>
+    </button>
+  }
+</mat-toolbar>

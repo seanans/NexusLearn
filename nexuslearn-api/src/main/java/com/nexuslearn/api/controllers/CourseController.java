@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -49,6 +50,11 @@ public class CourseController {
     public ResponseEntity<AssignmentResponse> getAssignmentById(@PathVariable UUID courseId, @PathVariable UUID assignmentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         AssignmentResponse response = courseService.getAssignmentById(courseId, assignmentId, userDetails.user());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{courseId}/members")
+    public ResponseEntity<List<CourseMemberResponse>> getCourseMembers(@PathVariable UUID courseId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(courseService.getCourseMembers(courseId, userDetails.user()));
     }
 
     @PostMapping

@@ -1,0 +1,118 @@
+@if (viewData$ | async; as view) {
+  <div class="syllabus-section">
+    <a routerLink="/courses" style="display: inline-block; margin-bottom: 1rem; color: #64748b; text-decoration: none; font-size: 0.9rem; font-weight: 600;">
+      ← Back to Courses
+    </a>
+    <div class="syllabus-header">
+      <h2>Course Curriculum</h2>
+      @if (view.role === CourseRole.TEACHER || view.role === CourseRole.ASSISTANT) {
+        <button class="btn-dashed-sm" (click)="startCreatingModule()">+ Add Module</button>
+      }
+    </div>
+
+    @if (isCreatingModule) {
+      <div class="module-card module-creator-pane">
+        <div class="form-group">
+          <label>New Module Title</label>
+          <input type="text" [(ngModel)]="newModuleForm.title" class="form-control" placeholder="e.g., Module 1: Introduction">
+        </div>
+        <div class="form-group">
+          <label>Description (Optional)</label>
+          <input type="text" [(ngModel)]="newModuleForm.description" class="form-control" placeholder="Briefly describe what this module covers...">
+        </div>
+        <div class="editor-actions">
+          <button class="btn-cancel" (click)="isCreatingModule = false">Cancel</button>
+          <button class="btn-save" (click)="saveNewModule(view.syllabus.courseId)" [disabled]="isSaving || !newModuleForm.title.trim()">
+            {{ isSaving ? 'Creating...' : 'Create Module' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @for (module of view.syllabus.modules; track module.moduleId) {
+      <div class="module-card">
+
+        @if (editingModuleId === module.moduleId) {
+          <div class="module-editor-pane">
+            <div class="form-group">
+              <label>Module Title</label>
+              <input type="text" [(ngModel)]="editForm.title" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea [(ngModel)]="editForm.description" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="editor-footer">
+              <label class="publish-toggle">
+                <input type="checkbox" [(ngModel)]="editForm.isPublished">
+                <span class="toggle-label">Publish to Students</span>
+              </label>
+              <div class="editor-actions">
+                <button class="btn-cancel" (click)="cancelEditing($event)">Cancel</button>
+                <button class="btn-save" (click)="saveModule(module.moduleId, $event)" [disabled]="isSaving">Save</button>
+              </div>
+            </div>
+          </div>
+        }
+
+        @else {
+          <div class="module-header" (click)="toggleModule(module.moduleId)">
+            <div class="module-info">
+              <div class="title-row">
+                <span class="chevron" [class.rotated]="expandedModules.has(module.moduleId)">▶</span>
+                <span class="module-title">{{ module.title }}</span>
+                @if (!module.published) { <span class="badge-draft">DRAFT</span> }
+              </div>
+              @if (module.description) { <p class="module-description">{{ module.description }}</p> }
+            </div>
+
+            @if (view.role === CourseRole.TEACHER || view.role === CourseRole.ASSISTANT) {
+              <div class="module-actions">
+                <button class="icon-btn edit" (click)="startEditing(module, $event)">Edit</button>
+                <button class="icon-btn delete" (click)="deleteModule(module.moduleId, $event)">Delete</button>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="items-list-wrapper" [class.expanded]="expandedModules.has(module.moduleId)">
+
+          <div class="items-list">
+            @for (item of module.items; track item.itemId) {
+              <a class="item-link"
+                 [routerLink]="item.type === ItemType.LESSON
+                    ? ['/courses', view.syllabus.courseId, 'lessons', item.itemId]
+                    : ['/courses', view.syllabus.courseId, 'assignments', item.itemId]">
+                <span class="type-badge" [ngClass]="item.type.toLowerCase()">
+                  {{ item.type === ItemType.LESSON ? 'Lesson' : 'Assignment' }}
+                </span>
+                <span class="item-title">{{ item.title }}</span>
+              </a>
+            }
+
+            @if (module.items.length === 0 && view.role === CourseRole.STUDENT) {
+              <div class="empty">No public curriculum components are visible.</div>
+            }
+
+            @if (view.role === CourseRole.TEACHER || view.role === CourseRole.ASSISTANT) {
+
+              @if (creatingItemForModuleId === module.moduleId) {
+                <div class="inline-item-creator">
+                  <span class="type-badge" [ngClass]="newItemType?.toLowerCase()">{{ newItemType }}</span>
+                  <input type="text" [(ngModel)]="newItemTitle" class="form-control inline-input" placeholder="Enter title and press Save..." (keyup.enter)="saveNewItem()">
+                  <button class="btn-cancel" (click)="creatingItemForModuleId = null">Cancel</button>
+                  <button class="btn-save" (click)="saveNewItem()" [disabled]="!newItemTitle.trim() || isSaving">Save</button>
+                </div>
+              } @else {
+                <div class="add-item-bar" style="display: flex; gap: 1rem; padding: 1rem 1.5rem; background: #fafafa; border-top: 1px solid #e2e8f0;">
+                  <button class="btn-ghost-block" (click)="startCreatingItem(module.moduleId, ItemType.LESSON)">+ Add Lesson</button>
+                  <button class="btn-ghost-block" (click)="startCreatingItem(module.moduleId, ItemType.ASSIGNMENT)">+ Add Assignment</button>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -1,0 +1,81 @@
+@if (viewData$ | async; as data) {
+  <div class="people-container">
+    <div class="header-row">
+      <h2>People</h2>
+      @if (data.role === CourseRole.TEACHER || data.role === CourseRole.ASSISTANT) {
+        <button class="btn-primary-sm" (click)="isInviting = true">+ Invite Person</button>
+      }
+    </div>
+
+    @if (isInviting) {
+      <div class="modal-backdrop" (click)="isInviting = false">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Invite to Course</h3>
+            <button class="close-btn" (click)="isInviting = false">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>User's Email Address</label>
+              <input type="email" [(ngModel)]="inviteForm.email" class="form-control" placeholder="student@example.com">
+            </div>
+            <div class="form-group">
+              <label>Assign Role</label>
+              <select [(ngModel)]="inviteForm.role" class="form-control">
+                <option [value]="CourseRole.STUDENT">Student</option>
+                @if (data.role === CourseRole.TEACHER) {
+                  <option [value]="CourseRole.ASSISTANT">Assistant (Can grade & edit)</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" (click)="isInviting = false">Cancel</button>
+            <button class="btn-save" (click)="sendInvite(data.courseId)" [disabled]="isSaving || !inviteForm.email">
+              {{ isSaving ? 'Sending...' : 'Send Invite' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="table-card">
+      <table class="roster-table">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Joined</th>
+          @if (data.role === CourseRole.TEACHER || data.role === CourseRole.ASSISTANT) {
+            <th style="width: 80px; text-align: center;">Actions</th>
+          }
+        </tr>
+        </thead>
+        <tbody>
+          @for (member of data.members; track member.email) {
+            <tr>
+              <td class="primary-col">
+                <div class="avatar">{{ member.firstName.charAt(0) }}{{ member.lastName.charAt(0) }}</div>
+                <span>{{ member.firstName }} {{ member.lastName }}</span>
+              </td>
+              <td class="text-muted">{{ member.email }}</td>
+              <td>
+                <span class="role-badge" [class]="member.role.toLowerCase()">{{ member.role }}</span>
+              </td>
+              <td class="text-muted">{{ member.joinedAt | date:'mediumDate' }}</td>
+
+              @if (data.role === CourseRole.TEACHER || data.role === CourseRole.ASSISTANT) {
+                <td style="text-align: center;">
+                  @if (member.role !== CourseRole.TEACHER) {
+                    <button class="btn-danger-icon" (click)="removeMember(data.courseId, member.email)" title="Remove user">✕</button>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

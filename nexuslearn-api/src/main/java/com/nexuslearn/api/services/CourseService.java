@@ -70,14 +70,10 @@ public class CourseService {
 
         List<CourseSyllabusResponse.SyllabusModuleDto> moduleDtos = modules.stream().map(module -> {
             UUID mId = module.getId();
-
             Stream<CourseSyllabusResponse.SyllabusItemDto> lessonItems = lessonsByModule.getOrDefault(mId, java.util.Collections.emptyList()).stream().map(l -> new CourseSyllabusResponse.SyllabusItemDto(l.getId(), l.getTitle(), ItemType.LESSON, l.getOrderIndex()));
-
             Stream<CourseSyllabusResponse.SyllabusItemDto> assignmentItems = assignmentsByModule.getOrDefault(mId, java.util.Collections.emptyList()).stream().map(a -> new CourseSyllabusResponse.SyllabusItemDto(a.getId(), a.getTitle(), ItemType.ASSIGNMENT, a.getOrderIndex()));
-
             List<CourseSyllabusResponse.SyllabusItemDto> combinedItems = Stream.concat(lessonItems, assignmentItems).sorted(java.util.Comparator.comparing(CourseSyllabusResponse.SyllabusItemDto::orderIndex)).toList();
-
-            return new CourseSyllabusResponse.SyllabusModuleDto(mId, module.getTitle(), module.getOrderIndex(), combinedItems);
+            return new CourseSyllabusResponse.SyllabusModuleDto(mId, module.getTitle(), module.getDescription(), module.getIsPublished() != null ? module.getIsPublished() : false, module.getOrderIndex(), combinedItems);
         }).toList();
 
         return new CourseSyllabusResponse(courseId, moduleDtos);
@@ -94,7 +90,7 @@ public class CourseService {
             lesson = lessonRepository.findVisibleByIdAndCourseId(lessonId, courseId).orElseThrow(() -> new AppException("Lesson not found or not yet available", HttpStatus.FORBIDDEN));
         }
 
-        return LessonResponse.builder().id(lesson.getId()).title(lesson.getTitle()).content(lesson.getContent()).orderIndex(lesson.getOrderIndex()).isPublished(lesson.getIsPublished()).createdAt(lesson.getCreatedAt()).updatedAt(lesson.getUpdatedAt()).attachments(attachmentService.getAttachmentsForEntity(lessonId, EntityType.LESSON, user)).build();
+        return LessonResponse.builder().id(lesson.getId()).title(lesson.getTitle()).content(lesson.getContent()).orderIndex(lesson.getOrderIndex()).published(lesson.getIsPublished()).availableFrom(lesson.getAvailableFrom()).createdAt(lesson.getCreatedAt()).updatedAt(lesson.getUpdatedAt()).attachments(attachmentService.getAttachmentsForEntity(lessonId, EntityType.LESSON, user)).build();
     }
 
     @Transactional(readOnly = true)
@@ -107,7 +103,7 @@ public class CourseService {
             assignment = assignmentRepository.findVisibleByIdAndCourseId(assignmentId, courseId).orElseThrow(() -> new AppException("Assignment not found or not yet available", HttpStatus.FORBIDDEN));
         }
 
-        return AssignmentResponse.builder().id(assignment.getId()).title(assignment.getTitle()).description(assignment.getDescription()).maxScore(assignment.getMaxScore()).dueDate(assignment.getDueDate()).orderIndex(assignment.getOrderIndex()).isPublished(assignment.getIsPublished()).createdAt(assignment.getCreatedAt()).updatedAt(assignment.getUpdatedAt()).attachments(attachmentService.getAttachmentsForEntity(assignmentId, EntityType.ASSIGNMENT, user)).build();
+        return AssignmentResponse.builder().id(assignment.getId()).title(assignment.getTitle()).description(assignment.getDescription()).maxScore(assignment.getMaxScore()).dueDate(assignment.getDueDate()).orderIndex(assignment.getOrderIndex()).published(assignment.getIsPublished()).availableFrom(assignment.getAvailableFrom()).createdAt(assignment.getCreatedAt()).updatedAt(assignment.getUpdatedAt()).attachments(attachmentService.getAttachmentsForEntity(assignmentId, EntityType.ASSIGNMENT, user)).build();
     }
 
     @Transactional
@@ -138,6 +134,23 @@ public class CourseService {
 
         course = courseRepository.save(course);
         return CourseResponse.builder().id(course.getId()).title(course.getTitle()).description(course.getDescription()).lastActivityMessage(course.getLastActivityMessage()).lastActivityAt(course.getLastActivityAt()).build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseMemberResponse> getCourseMembers(UUID courseId, User user) {
+        securityValidator.validateAccess(courseId, user, false);
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new AppException("Course not found", HttpStatus.NOT_FOUND));
+
+        return course.getMembers().stream()
+                .map(cm -> CourseMemberResponse.builder()
+                        .email(cm.getUser().getEmail())
+                        .firstName(cm.getUser().getFirstName())
+                        .lastName(cm.getUser().getLastName())
+                        .role(cm.getRole())
+                        .joinedAt(cm.getJoinedAt())
+                        .build())
+                .toList();
     }
 
     @Transactional
