@@ -2,31 +2,33 @@
   <div class="layout-container">
     <header class="master-header">
       <div class="header-left">
-        <a routerLink="/courses" class="back-nav">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          Dashboard
+        <a routerLink="/courses" class="back-nav-btn" aria-label="Back to Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
         </a>
         <h1 class="course-title">{{ course.title }}</h1>
-      </div>
-      <div class="header-right">
         <span class="role-badge" [class]="course.currentUserRole.toLowerCase()">
           {{ course.currentUserRole }}
         </span>
       </div>
     </header>
 
-    <div class="course-tabs">
+    <nav class="course-tabs">
       <a [routerLink]="['/courses', course.id, 'syllabus']" routerLinkActive="active">Syllabus</a>
       <a [routerLink]="['/courses', course.id, 'people']" routerLinkActive="active">People</a>
       @if (course.currentUserRole === CourseRole.TEACHER) {
         <a [routerLink]="['/courses', course.id, 'settings']" routerLinkActive="active">Settings</a>
       }
-    </div>
+    </nav>
 
     <main class="content-area">
       <router-outlet></router-outlet>
     </main>
   </div>
 } @else {
-  <div class="loading-overlay">Authenticating Course Access...</div>
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <span>Authenticating Course Access...</span>
+  </div>
 }

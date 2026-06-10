@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register-page.component.html',
-  styleUrls: ['../login-page/login-page.component.scss']
+  styleUrls: ['./register-page.component.scss']
 })
 export class RegisterPageComponent {
   private fb = inject(FormBuilder);
@@ -18,7 +18,10 @@ export class RegisterPageComponent {
   registerForm = this.fb.nonNullable.group({
     firstName: ['', [Validators.required]],
     lastName: ['', [Validators.required]],
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', [
+      Validators.required,
+      Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/)
+    ]],
     password: ['', [Validators.required, Validators.minLength(6)]]
   });
 

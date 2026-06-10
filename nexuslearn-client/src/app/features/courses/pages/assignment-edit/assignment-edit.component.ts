@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CourseService } from '../../services/course.service';
 import { FileStorageService } from '../../services/file-storage.service';
@@ -8,7 +8,7 @@ import { AttachmentResponse, PendingAttachmentDto } from '../../models/course.mo
 @Component({
   selector: 'app-assignment-edit',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './assignment-edit.component.html',
   styleUrls: ['./assignment-edit.component.scss']
 })

@@ -1,23 +1,113 @@
 mat-toolbar {
   display: flex;
-  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 1000;
+  padding: 0 16px;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
   cursor: pointer;
-  gap: 8px;
+  gap: 12px;
+  transition: opacity 0.2s ease;
+
+  &:hover { opacity: 0.9; }
+
+  .logo-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
 }
 
 .brand-name {
-  font-weight: 500;
-  font-size: 1.2rem;
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
 }
 
 .spacer {
   flex: 1 1 auto;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Standardize layout density gaps */
+
+  /* Force dashboard button to have the identical structure format */
+  button[mat-button] {
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    height: 38px !important; /* Lock bounding dimensions inline with the link pill */
+    line-height: 22px !important;
+    color: #111827 !important;
+    background-color: transparent;
+    transition: background-color 0.2s;
+
+    &:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
+  }
+}
+
+.mobile-nav {
+  display: none; /* Hidden by default on PC */
+  align-items: center;
+  gap: 4px;
+}
+
+.premium-nav-btn {
+  background-color: #111827;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px; /* Harmonized corner curve values */
+  font-weight: 500;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  box-sizing: border-box;
+  transition: background-color 0.2s;
+
+  &:hover { background-color: #374151; }
+}
+
+.divider {
+  height: 24px;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 0 4px;
+}
+
+/* --- THE MOBILE CIRCUIT BREAKER --- */
+@media (max-width: 600px) {
+  .brand-name {
+    display: none; /* Hide text, keep only the school icon */
+  }
+
+  .desktop-nav {
+    display: none; /* Hide wide text buttons */
+  }
+
+  .mobile-nav {
+    display: flex; /* Show compact icon buttons */
+  }
+
+  .logo-container {
+    gap: 0;
+  }
+
+  .nav-actions {
+    gap: 0; /* Tighten up spacing to guarantee no overflow */
+  }
 }

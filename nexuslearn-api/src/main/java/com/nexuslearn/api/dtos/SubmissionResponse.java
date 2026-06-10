@@ -22,5 +22,6 @@ public class SubmissionResponse {
     private LocalDateTime submittedAt;
     private boolean late;
     private UUID gradedBy;
+    private LocalDateTime gradedAt;
     private List<AttachmentResponse> attachments;
 }

@@ -1,17 +1,33 @@
 <mat-toolbar color="primary" class="mat-elevation-z4">
   <div class="logo-container" routerLink="/">
-    <mat-icon>school</mat-icon>
+    <mat-icon class="logo-icon">school</mat-icon>
     <span class="brand-name">NexusLearn</span>
   </div>
 
   <span class="spacer"></span>
 
-  @if (!authService.isAuthenticated()) {
-    <button mat-button routerLink="/login">Login</button>
-  } @else {
-    <button mat-button routerLink="/courses">Dashboard</button>
-    <button mat-icon-button (click)="logout()" aria-label="Logout">
-      <mat-icon>logout</mat-icon>
-    </button>
-  }
+  <div class="nav-actions">
+    @if (!authService.isAuthenticated()) {
+      <button mat-button routerLink="/login">Login</button>
+    } @else {
+      <div class="desktop-nav">
+        <a routerLink="/messages" class="premium-nav-btn">Messages</a>
+        <button mat-button routerLink="/courses">Dashboard</button>
+      </div>
+
+      <div class="mobile-nav">
+        <button mat-icon-button routerLink="/messages" aria-label="Messages">
+          <mat-icon>chat</mat-icon>
+        </button>
+        <button mat-icon-button routerLink="/courses" aria-label="Dashboard">
+          <mat-icon>dashboard</mat-icon>
+        </button>
+      </div>
+
+      <div class="divider"></div>
+      <button mat-icon-button (click)="logout()" aria-label="Logout" class="logout-btn">
+        <mat-icon>logout</mat-icon>
+      </button>
+    }
+  </div>
 </mat-toolbar>

@@ -44,6 +44,9 @@ public class SubmissionService {
         submission.setSubmissionText(request.getSubmissionText());
         submission.setScore(null);
         submission.setFeedback(null);
+        submission.setGradedBy(null);
+        submission.setGradedAt(null);
+        submission.setSubmittedAt(LocalDateTime.now());
         submission = submissionRepository.save(submission);
         if (request.getAttachments() != null && !request.getAttachments().isEmpty()) {
             attachmentRepository.deleteByEntityIdAndEntityType(submission.getId(), EntityType.SUBMISSION);
@@ -76,6 +79,7 @@ public class SubmissionService {
         submission.setScore(request.getScore());
         submission.setFeedback(request.getFeedback());
         submission.setGradedBy(user);
+        submission.setGradedAt(LocalDateTime.now());
 
         submission = submissionRepository.save(submission);
         return mapToResponse(submission, user);
@@ -101,9 +105,10 @@ public class SubmissionService {
     }
 
     private SubmissionResponse mapToResponse(AssignmentSubmission submission, User user) {
-        LocalDateTime evaluationTime = submission.getUpdatedAt() != null ?
-                submission.getUpdatedAt() : LocalDateTime.now();
-        boolean isLate = evaluationTime.isAfter(submission.getAssignment().getDueDate());
+        LocalDateTime actualSubmissionTime = submission.getSubmittedAt() != null ?
+                submission.getSubmittedAt() : submission.getUpdatedAt();
+
+        boolean isLate = actualSubmissionTime != null && actualSubmissionTime.isAfter(submission.getAssignment().getDueDate());
 
         return SubmissionResponse.builder()
                 .id(submission.getId())
@@ -113,7 +118,8 @@ public class SubmissionService {
                 .submissionText(submission.getSubmissionText())
                 .score(submission.getScore())
                 .feedback(submission.getFeedback())
-                .submittedAt(submission.getUpdatedAt())
+                .submittedAt(actualSubmissionTime)
+                .gradedAt(submission.getGradedAt())
                 .late(isLate)
                 .gradedBy(submission.getGradedBy() != null ? submission.getGradedBy().getId() : null)
                 .attachments(attachmentService.getAttachmentsForEntity(submission.getId(), EntityType.SUBMISSION, user))

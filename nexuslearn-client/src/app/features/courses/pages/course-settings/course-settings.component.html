@@ -1,35 +1,37 @@
-<div class="settings-container">
+<div class="workspace-section">
+
   <div class="settings-header">
     <h1>Course Settings</h1>
     <p class="subtitle">Manage global details and visibility for this course.</p>
   </div>
 
-  <section class="settings-card">
-    <h2>General Information</h2>
+  <div class="form-group">
+    <label>Course Title <span class="required">*</span></label>
+    <input type="text" [(ngModel)]="title" class="form-control" placeholder="e.g., Advanced Mathematics 101">
+  </div>
 
-    <div class="form-group">
-      <label>Course Title <span class="required">*</span></label>
-      <input type="text" [(ngModel)]="title" class="form-control" placeholder="e.g., Advanced Mathematics 101">
+  <div class="form-group">
+    <label>Course Description</label>
+    <textarea [(ngModel)]="description" class="form-control" rows="4" placeholder="A brief overview of what students will learn..."></textarea>
+  </div>
+
+  <div class="action-row-right">
+    <button class="btn-save" (click)="saveSettings()" [disabled]="isSaving || !title.trim()">
+      {{ isSaving ? 'Saving...' : 'Update Settings' }}
+    </button>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="danger-zone-flat">
+    <div class="danger-text">
+      <h2>Danger Zone</h2>
+      <p>Permanently delete this course and all associated data. This action cannot be undone.</p>
     </div>
 
-    <div class="form-group">
-      <label>Course Description</label>
-      <textarea [(ngModel)]="description" class="form-control" rows="4" placeholder="A brief overview of what students will learn..."></textarea>
-    </div>
-
-    <div class="card-footer">
-      <button class="btn-save" (click)="saveSettings()" [disabled]="isSaving || !title.trim()">
-        {{ isSaving ? 'Saving...' : 'Update Settings' }}
-      </button>
-    </div>
-  </section>
-
-  <section class="settings-card danger-zone">
-    <h2>Danger Zone</h2>
-    <p>Permanently delete this course and all associated data. This action cannot be undone.</p>
-
-    <div class="danger-actions">
+    <div class="action-row-right" style="margin-top: 16px;">
       <button class="btn-danger" (click)="deleteCourse()">Delete Course</button>
     </div>
-  </section>
+  </div>
+
 </div>

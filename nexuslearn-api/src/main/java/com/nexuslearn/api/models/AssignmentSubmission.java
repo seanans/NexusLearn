@@ -3,10 +3,12 @@ package com.nexuslearn.api.models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(
         name = "assignment_submissions",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"assignment_id", "user_id"}) // [cite: 1159]
+        uniqueConstraints = @UniqueConstraint(columnNames = {"assignment_id", "user_id"})
 )
 @Getter
 @Setter
@@ -34,4 +36,10 @@ public class AssignmentSubmission extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "graded_by_id")
     private User gradedBy;
+
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
+
+    @Column(name = "graded_at")
+    private LocalDateTime gradedAt;
 }

@@ -1,8 +1,12 @@
-<div class="editor-layout">
-  <header class="editor-header">
-    <div class="header-titles">
-      <h1>Edit Details</h1>
-      <span class="subtitle">Update the content, availability, and course materials</span>
+<div class="workspace-section">
+
+  <a [routerLink]="['/courses', courseId, 'lessons', lessonId]" class="back-link">
+    ← Cancel Editing
+  </a>
+
+  <header class="workspace-header">
+    <div class="header-main">
+      <h1>Edit Lesson</h1>
     </div>
     <div class="publish-toggle-wrapper" [class.published]="isPublished">
       <span class="status-text">Publish to Students</span>
@@ -13,7 +17,7 @@
     </div>
   </header>
 
-  <main class="editor-body">
+  <main class="workspace-body">
     <section class="editor-section">
       <h2>Lesson Details</h2>
       <div class="form-group">
@@ -46,7 +50,7 @@
             @for (file of existingAttachments; track file.id; let i = $index) {
               <div class="file-card">
                 <div class="file-info">
-                  <span class="file-icon">📄</span>
+                  <svg class="file-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
                   <span class="file-name" [title]="file.fileName">{{ file.fileName }}</span>
                 </div>
                 <button class="icon-btn-danger" (click)="deleteExistingAttachment(file.id, i)" title="Delete File">
@@ -61,7 +65,7 @@
       <div class="upload-zone">
         <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none">
         <div class="upload-prompt" (click)="fileInput.click()">
-          <div class="upload-icon">⬆️</div>
+          <svg class="upload-icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
           <p><strong>Click to browse</strong> and select a file to attach.</p>
           <span class="upload-hint">{{ isUploadingFile ? 'Uploading to secure vault...' : 'Supports PDF, DOCX, ZIP, JPG, MP4' }}</span>
         </div>
@@ -73,7 +77,10 @@
           <ul class="staged-list">
             @for (staged of stagedFiles; track $index) {
               <li>
-                <span><span style="margin-right: 8px;">⏳</span> {{ staged.fileName }}</span>
+                <span style="display: flex; align-items: center; gap: 8px;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  {{ staged.fileName }}
+                </span>
                 <button class="remove-btn" (click)="removeStagedFile($index)">Remove</button>
               </li>
             }

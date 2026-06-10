@@ -1,55 +1,58 @@
-.settings-container {
-  max-width: 800px;
-  margin: 0 auto;
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
 
-  .settings-header {
-    margin-bottom: 2rem;
-    h1 { margin: 0 0 0.5rem 0; font-size: 1.8rem; color: #0f172a; font-weight: 700; }
-    .subtitle { margin: 0; color: #64748b; font-size: 1rem; }
+.settings-header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eaeaea;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
   }
 }
 
-.settings-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+.section-divider {
+  border: 0;
+  border-top: 1px solid #eaeaea;
+  margin: 40px 0 32px 0;
+}
 
-  h2 { margin: 0 0 1.5rem 0; font-size: 1.25rem; color: #1e293b; font-weight: 600; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; }
+.danger-zone-flat {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 24px;
 
-  .form-group {
-    margin-bottom: 1.5rem;
-    label { display: block; font-size: 0.9rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem; .required { color: #ef4444; } }
-    .form-control {
-      width: 100%; padding: 0.75rem 1rem; font-size: 0.95rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; transition: border-color 0.2s;
-      &:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+  .danger-text {
+    h2 {
+      color: #dc2626;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 8px;
     }
-    textarea { resize: vertical; }
-  }
 
-  .card-footer {
-    display: flex; justify-content: flex-end; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #f1f5f9;
-
-    .btn-save {
-      background: #0f172a; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s;
-      &:hover:not(:disabled) { background: #1e293b; }
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
+    p {
+      color: #7f1d1d;
+      font-size: 14px;
+      margin: 0;
+      line-height: 1.5;
     }
   }
+}
 
-  &.danger-zone {
-    border-color: #fca5a5;
-    background: #fef2f2;
-    h2 { color: #991b1b; border-bottom-color: #fecaca; }
-    p { color: #b91c1c; font-size: 0.95rem; margin-bottom: 1.5rem; }
-
-    .danger-actions {
-      .btn-danger {
-        background: #dc2626; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s;
-        &:hover { background: #b91c1c; }
-      }
-    }
-  }
+@media (max-width: 600px) {
+  .danger-zone-flat { padding: 16px; }
 }

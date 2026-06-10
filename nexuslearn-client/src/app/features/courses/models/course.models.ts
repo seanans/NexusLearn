@@ -81,6 +81,7 @@ export interface SubmissionResponse {
   submittedAt: string;
   late: boolean;
   gradedBy: string | null;
+  gradedAt: string | null;
   attachments?: AttachmentResponse[];
 }
 

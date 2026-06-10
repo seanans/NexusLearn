@@ -2,7 +2,7 @@ import {ChangeDetectorRef, Component, inject, OnInit} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe, DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Observable, combineLatest, switchMap, filter, map, BehaviorSubject } from 'rxjs';
+import { Observable, combineLatest, switchMap, filter, map, BehaviorSubject, of, catchError } from 'rxjs';
 import { CourseService } from '../../services/course.service';
 import { AssignmentResponse, CourseRole, SubmissionResponse, PendingAttachmentDto, EntityType } from '../../models/course.models';
 import { AttachmentGalleryComponent } from '../../../../shared/components/attachment-gallery/attachment-gallery.component';
@@ -28,7 +28,7 @@ export class AssignmentSubmissionComponent implements OnInit {
   private fileStorageService = inject(FileStorageService);
   private cdr = inject(ChangeDetectorRef);
 
-  viewData$!: Observable<AssignmentViewData>;
+  viewData$!: Observable<AssignmentViewData | null>;
   CourseRole = CourseRole;
   EntityType = EntityType;
 
@@ -53,11 +53,22 @@ export class AssignmentSubmissionComponent implements OnInit {
         const assignmentId = params.get('assignmentId')!;
 
         return combineLatest([
-          this.courseService.getAssignmentById(courseId, assignmentId),
-          this.courseService.getSubmissions(assignmentId)
+          this.courseService.getAssignmentById(courseId, assignmentId).pipe(
+            catchError(err => {
+              console.error("Assignment load failed", err);
+              return of(null);
+            })
+          ),
+          this.courseService.getSubmissions(assignmentId).pipe(
+            catchError(err => {
+              console.warn("Submissions load failed or restricted. Defaulting to empty array.");
+              return of([]);
+            })
+          )
         ]).pipe(
           map(([assignment, submissions]) => {
-            // Sorting logic: ungraded to the top
+            if (!assignment) return null;
+
             const sortedSubmissions = [...submissions].sort((a, b) => {
               if (a.score === null && b.score !== null) return -1;
               if (a.score !== null && b.score === null) return 1;

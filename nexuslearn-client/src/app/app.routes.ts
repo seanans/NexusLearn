@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import {MessagesHubComponent} from './features/messages-hub/messages-hub.component';
+import {CourseChatComponent} from './features/course-chat/course-chat.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'courses', pathMatch: 'full' },
@@ -50,6 +52,16 @@ export const routes: Routes = [
         loadComponent: () => import('./features/courses/pages/course-people/course-people.component').then(m => m.CoursePeopleComponent)
       },
       { path: '', redirectTo: 'syllabus', pathMatch: 'full' }
+    ]
+  },
+  {
+    path: 'messages',
+    component: MessagesHubComponent,
+    children: [
+      {
+        path: ':courseId', // Loads into the <router-outlet> inside MessagesHubComponent
+        component: CourseChatComponent
+      }
     ]
   },
   { path: '**', redirectTo: 'courses' }

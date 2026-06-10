@@ -14,9 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.UUID;
 
 @Component
@@ -27,6 +27,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final CourseMemberRepository courseMemberRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final ModuleRepository moduleRepository;
     private final LessonRepository lessonRepository;
     private final AssignmentRepository assignmentRepository;
@@ -44,93 +45,166 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if (userRepository.count() > 0) {
-            log.info("Database already seeded. Skipping data population.");
-            return;
+        if (userRepository.count() > 0) return;
+
+        // 1. Seed 10 Users with REAL names
+        String[][] realNames = {
+                {"Alan", "Turing"},      // Index 0: Teacher
+                {"Grace", "Hopper"},     // Index 1: TA
+                {"Alice", "Smith"},      // Index 2: Student
+                {"Bob", "Johnson"},      // Index 3: Student
+                {"Charlie", "Brown"},    // Index 4: Student
+                {"David", "Miller"},     // Index 5: Student
+                {"Eve", "Davis"},        // Index 6: Student
+                {"Frank", "Wilson"},     // Index 7: Student
+                {"George", "Taylor"},    // Index 8: Student
+                {"Hannah", "Moore"}      // Index 9: Student
+        };
+
+        User[] users = new User[10];
+        for (int i = 0; i < 10; i++) {
+            users[i] = userRepository.save(User.builder()
+                    .email(realNames[i][0].toLowerCase() + "@nexuslearn.com")
+                    .passwordHash(passwordEncoder.encode("Password123!"))
+                    .firstName(realNames[i][0])
+                    .lastName(realNames[i][1])
+                    .build());
         }
 
-        log.info("Starting NexusLearn application data seeding...");
+        // 2. Seed 3 Courses
+        for (int c = 0; c < 3; c++) {
+            Course course = courseRepository.save(Course.builder()
+                    .title("Enterprise Architecture " + (c + 101))
+                    .description("Advanced concepts in software engineering, system design, and scalable networking.")
+                    .build());
 
-        // 1. Seed Users
-        String commonPasswordHash = passwordEncoder.encode("Password123!");
+            // Assign users to courses with their correct hierarchical roles
+            for (int i = 0; i < users.length; i++) {
+                CourseRole role = (i == 0) ? CourseRole.TEACHER : (i == 1) ? CourseRole.ASSISTANT : CourseRole.STUDENT;
+                courseMemberRepository.save(CourseMember.builder()
+                        .id(new CourseMemberId(users[i].getId(), course.getId()))
+                        .user(users[i])
+                        .course(course)
+                        .role(role)
+                        .build());
+            }
 
-        User teacher = User.builder().email("teacher@nexuslearn.com").passwordHash(commonPasswordHash).firstName("Professor").lastName("Snape").build();
-        userRepository.save(teacher);
+            // 3. Seed Modules, Lessons, Assignments, and Submissions
+            for (int m = 1; m <= 2; m++) { // 2 Modules per course
+                Module module = moduleRepository.save(Module.builder()
+                        .course(course)
+                        .title("Module " + m + ": Core Systems")
+                        .description("Understanding the fundamental paradigms of distributed architecture.")
+                        .orderIndex(m)
+                        .isPublished(true).build());
 
-        User student1 = User.builder().email("student1@nexuslearn.com").passwordHash(commonPasswordHash).firstName("Harry").lastName("Potter").build();
-        userRepository.save(student1);
+                // Lesson with a sample attachment
+                Lesson lesson = lessonRepository.save(Lesson.builder()
+                        .module(module)
+                        .title("Lesson " + m + " Overview")
+                        .content("<p>Please review the attached presentation slides before our next seminar.</p>")
+                        .orderIndex(1)
+                        .isPublished(true).build());
 
-        User student2 = User.builder().email("student2@nexuslearn.com").passwordHash(commonPasswordHash).firstName("Ron").lastName("Weasley").build();
-        userRepository.save(student2);
+                String lessonFileUrl = uploadRealFile("sample.pdf", "application/pdf");
+                attachmentRepository.save(Attachment.builder()
+                        .entityId(lesson.getId()).entityType(EntityType.LESSON)
+                        .fileUrl(lessonFileUrl).fileName("Lecture_Slides_M" + m + ".pdf").fileType("PDF").build());
 
-        // 2. Seed Course
-        Course course = Course.builder().title("Advanced Software Engineering: JPA & Patterns").description("Master enterprise development using Spring Boot 4, Hibernate performance tuning, and scalable Angular standalone applications.").lastActivityMessage("Course structure initialized by system seeder").lastActivityAt(LocalDateTime.now()).build();
-        course = courseRepository.save(course);
+                // Assignment with a sample attachment
+                Assignment assignment = assignmentRepository.save(Assignment.builder()
+                        .module(module)
+                        .title("Lab Assignment " + m)
+                        .description("Complete the system design document based on the requirements attached.")
+                        .dueDate(LocalDateTime.now().plusDays(7))
+                        .orderIndex(2)
+                        .maxScore(100)
+                        .isPublished(true).build());
 
-        // 3. Assign Members to Course
-        CourseMember memberTeacher = CourseMember.builder().id(new CourseMemberId(teacher.getId(), course.getId())).user(teacher).course(course).role(CourseRole.TEACHER).build();
-        courseMemberRepository.save(memberTeacher);
+                String assignFileUrl = uploadRealFile("sample.pdf", "application/pdf");
+                attachmentRepository.save(Attachment.builder()
+                        .entityId(assignment.getId()).entityType(EntityType.ASSIGNMENT)
+                        .fileUrl(assignFileUrl).fileName("Lab_Requirements.pdf").fileType("PDF").build());
 
-        CourseMember memberStudent1 = CourseMember.builder().id(new CourseMemberId(student1.getId(), course.getId())).user(student1).course(course).role(CourseRole.STUDENT).build();
-        courseMemberRepository.save(memberStudent1);
+                // ---- REALISTIC SUBMISSION STATES ----
 
-        CourseMember memberStudent2 = CourseMember.builder().id(new CourseMemberId(student2.getId(), course.getId())).user(student2).course(course).role(CourseRole.STUDENT).build();
-        courseMemberRepository.save(memberStudent2);
+                // Submission 1: Graded (Alice - Excellent)
+                AssignmentSubmission aliceSub = submissionRepository.save(AssignmentSubmission.builder()
+                        .assignment(assignment)
+                        .user(users[2])
+                        .submissionText("Here is my completed lab implementation. I utilized standard DTO projections to bypass the persistent context overhead.")
+                        .score(95)
+                        .feedback("Excellent architectural choices, Alice. Very efficient.")
+                        .gradedBy(users[0]) // Graded by Professor Alan Turing
+                        .submittedAt(LocalDateTime.now().minusDays(2))
+                        .gradedAt(LocalDateTime.now().minusDays(1))
+                        .build());
 
-        // 4. Seed Module 1 (Published Container)
-        Module module1 = Module.builder().course(course).title("Module 1: Relational Persistence Optimization").description("Diving deep into fetch configurations, caching layers, and database migration strategies.").orderIndex(1).isPublished(true).build();
-        module1 = moduleRepository.save(module1);
+                // Attach a ZIP to Alice's submission
+                String aliceFileUrl = uploadRealFile("sample.zip", "application/zip");
+                attachmentRepository.save(Attachment.builder()
+                        .entityId(aliceSub.getId()).entityType(EntityType.SUBMISSION)
+                        .fileUrl(aliceFileUrl).fileName("Alice_SourceCode.zip").fileType("ZIP").build());
 
-        // Lessons for Module 1
-        String lesson1Content = "<p>In this lesson, we study the core differences between LAZY and EAGER extraction types, mapping strategies to avoid runtime exceptions.</p>" +
-                "<iframe width=\"560\" height=\"315\" src=\"https://www.youtube.com/embed/tgbNymZ7vqY\" frameborder=\"0\" allowfullscreen></iframe>";
+                // Submission 2: Ungraded / Pending Review (Bob - Just submitted)
+                submissionRepository.save(AssignmentSubmission.builder()
+                        .assignment(assignment)
+                        .user(users[3])
+                        .submissionText("Professor, I struggled a bit with the MinIO bucket configuration but the fallback text generation is working as expected.")
+                        .submittedAt(LocalDateTime.now().minusHours(2))
+                        // Note: Score, feedback, gradedBy, and gradedAt are intentionally NULL
+                        .build());
 
-        Lesson lesson1 = Lesson.builder().module(module1).title("Understanding Fetch Joins & Entity Graphs").content(lesson1Content).orderIndex(1).isPublished(true).availableFrom(LocalDateTime.now().minusDays(5)).build();
-        lesson1 = lessonRepository.save(lesson1);
+                // Submission 3: Graded / Late (Charlie)
+                submissionRepository.save(AssignmentSubmission.builder()
+                        .assignment(assignment)
+                        .user(users[4])
+                        .submissionText("Sorry for the delay, had internet issues.")
+                        .score(75)
+                        .feedback("Good work, but -10 points for late submission.")
+                        .gradedBy(users[1]) // Graded by TA Grace Hopper
+                        .submittedAt(LocalDateTime.now().plusDays(8)) // Intentionally past the dueDate
+                        .gradedAt(LocalDateTime.now().plusDays(9))
+                        .build());
+            }
 
-        // Attachments for lesson 1 (Only physical cloud files)
-        String pdfUrl = createDummyFileInMinio("Lecture_Slides.pdf", "application/pdf", "Dummy PDF Content".getBytes(StandardCharsets.UTF_8));
-        attachmentRepository.save(Attachment.builder().entityId(lesson1.getId()).entityType(EntityType.LESSON).fileUrl(pdfUrl).fileName("Lecture_Slides.pdf").fileType("PDF").build());
+            // 4. Seed 100 Messages per course (Original Chat Logic)
+            for (int m = 0; m < 100; m++) {
+                ChatMessage msg = chatMessageRepository.save(ChatMessage.builder()
+                        .course(course)
+                        .sender(users[m % 10])
+                        .content("Message #" + m + " - Discussing the current module material.")
+                        .build());
 
-        Lesson lesson2 = Lesson.builder().module(module1).title("Time-Gated Premium Strategy Content").content("<p>This text content is restricted by scheduled availability bounds.</p>").orderIndex(2).isPublished(true).availableFrom(LocalDateTime.now().plusDays(3)).build();
-        lessonRepository.save(lesson2);
+                // Every 10th message, add an attachment
+                if (m % 10 == 0) {
+                    String fileName = (m % 30 == 0) ? "sample.pdf" : (m % 30 == 10) ? "sample.png" : "sample.zip";
+                    String mimeType = (m % 30 == 0) ? "application/pdf" : (m % 30 == 10) ? "image/png" : "application/zip";
 
-        // Assignment for Module 1
-        Assignment assignment1 = Assignment.builder().module(module1).title("Lab Assignment: Resolving N+1 Query Anomalies").description("Write a repository tier service layer utilizing JPA Interface Projections to bundle hierarchical domain streams into continuous JSON structures cleanly.").maxScore(100).dueDate(LocalDateTime.now().plusDays(7)).orderIndex(3).isPublished(true).availableFrom(LocalDateTime.now().minusDays(5)).build();
-        assignment1 = assignmentRepository.save(assignment1);
-
-        // Attachment for assignment 1
-        byte[] dummyImage = Base64.getDecoder().decode("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==");
-        String imageUrl = createDummyFileInMinio("Schema_Architecture.gif", "image/gif", dummyImage);
-        attachmentRepository.save(Attachment.builder().entityId(assignment1.getId()).entityType(EntityType.ASSIGNMENT).fileUrl(imageUrl).fileName("Schema_Architecture.gif").fileType("IMAGE").build());
-
-        // 5. Seed Module 2 (Draft/Unpublished Container)
-        Module module2 = Module.builder().course(course).title("Module 2: Reactive Pipelines & Messaging [Draft]").description("Exploring asynchronous processing architectures with WebSockets and persistent queues.").orderIndex(2).isPublished(false).build();
-        module2 = moduleRepository.save(module2);
-
-        Lesson lesson3 = Lesson.builder().module(module2).title("Introduction to Event-Driven State Replication").content("<p>Unpublished text definition.</p>").orderIndex(1).isPublished(true).build();
-        lessonRepository.save(lesson3);
-
-        // 6. Seed Submissions for Assignment 1
-        AssignmentSubmission submission1 = AssignmentSubmission.builder().assignment(assignment1).user(student1).submissionText("My implementation handles the batch stitching via custom stream mappings, grouping the entities in memory efficiently.").score(95).feedback("Excellent optimization strategy. Code successfully addresses transaction boundaries.").build();
-        submission1.setGradedBy(teacher);
-        submission1 = submissionRepository.save(submission1);
-
-        // Attachment for submission 1
-        String zipUrl = createDummyFileInMinio("SourceCode.zip", "application/zip", "Dummy Zip Content".getBytes(StandardCharsets.UTF_8));
-        attachmentRepository.save(Attachment.builder().entityId(submission1.getId()).entityType(EntityType.SUBMISSION).fileUrl(zipUrl).fileName("Harry_Potter_Lab1_SourceCode.zip").fileType("ZIP").build());
-
-        AssignmentSubmission submission2 = AssignmentSubmission.builder().assignment(assignment1).user(student2).submissionText("Here is my partial solution code stub layout...").score(null).feedback(null).build();
-        submissionRepository.save(submission2);
-
-        log.info("NexusLearn data seeding completed successfully.");
+                    String fileUrl = uploadRealFile(fileName, mimeType);
+                    attachmentRepository.save(Attachment.builder()
+                            .entityId(msg.getId())
+                            .entityType(EntityType.MESSAGE)
+                            .fileUrl(fileUrl)
+                            .fileName(fileName)
+                            .fileType(fileName.contains("pdf") ? "PDF" : fileName.contains("png") ? "IMAGE" : "ZIP")
+                            .build());
+                }
+            }
+        }
+        log.info("Seeding complete: 1 Teacher, 1 Assistant, 8 Students across 3 courses with rich LMS content.");
     }
 
-    private String createDummyFileInMinio(String fileName, String mimeType, byte[] content) throws Exception {
+    private String uploadRealFile(String fileName, String mimeType) throws Exception {
+        File file = new File("seeding-files/" + fileName);
+        if (!file.exists()) return minioBaseUrl + "/" + bucketName + "/fallback_" + System.currentTimeMillis() + ".txt";
+
+        byte[] content = Files.readAllBytes(file.toPath());
         String objectName = UUID.randomUUID() + "-" + fileName;
-
-        minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(objectName).stream(new ByteArrayInputStream(content), content.length, -1).contentType(mimeType).build());
-
+        minioClient.putObject(PutObjectArgs.builder()
+                .bucket(bucketName).object(objectName)
+                .stream(new ByteArrayInputStream(content), content.length, -1)
+                .contentType(mimeType).build());
         return minioBaseUrl + "/" + bucketName + "/" + objectName;
     }
 }
