@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface CourseRepository extends JpaRepository<Course, UUID> {
@@ -20,4 +21,16 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
             "LEFT JOIN User t ON teacherCm.user = t " +
             "WHERE myCm.user.id = :userId")
     Slice<CourseDashboardProjection> findDashboardCourses(@Param("userId") UUID userId, Pageable pageable);
+
+    @Query("""
+        SELECT c.id, c.title, m.content, m.createdAt
+        FROM Course c
+        JOIN c.members mem
+        LEFT JOIN ChatMessage m ON m.course = c AND m.createdAt = (
+            SELECT MAX(m2.createdAt) FROM ChatMessage m2 WHERE m2.course = c
+        )
+        WHERE mem.user.id = :userId
+        ORDER BY m.createdAt DESC NULLS LAST
+    """)
+    List<Object[]> findChatInboxDataByUserId(@Param("userId") UUID userId);
 }

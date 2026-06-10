@@ -49,7 +49,7 @@ public class AuthService {
 
         if (authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
-            String jwt = jwtTokenProvider.generateJwtToken(userDetails.getUsername());
+            String jwt = jwtTokenProvider.generateJwtToken(userDetails.getUsername(), userDetails.user().getId().toString());
 
             refreshTokenService.deleteByUserId(userDetails.user().getId());
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.user());
@@ -62,7 +62,7 @@ public class AuthService {
 
     public TokenRefreshResponse refreshToken(String requestRefreshToken) {
         return refreshTokenService.findByToken(requestRefreshToken).map(refreshTokenService::verifyExpiration).map(RefreshToken::getUser).map(user -> {
-            String newAccessToken = jwtTokenProvider.generateJwtToken(user.getEmail());
+            String newAccessToken = jwtTokenProvider.generateJwtToken(user.getEmail(), user.getId().toString());
             return TokenRefreshResponse.builder().accessToken(newAccessToken).refreshToken(requestRefreshToken).build();
         }).orElseThrow(() -> new AppException("Refresh token is not in database!", HttpStatus.FORBIDDEN));
     }

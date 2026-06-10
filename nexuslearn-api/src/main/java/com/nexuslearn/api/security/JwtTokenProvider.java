@@ -23,12 +23,13 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
-    public String generateJwtToken(String email) {
+    public String generateJwtToken(String email, String userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(email)
+                .claim("id", userId)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key())

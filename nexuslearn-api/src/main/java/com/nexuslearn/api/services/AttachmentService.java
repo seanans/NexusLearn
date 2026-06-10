@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,16 @@ public class AttachmentService {
         securityValidator.validateAttachmentView(entityId, entityType, currentUser);
 
         return attachmentRepository.findByEntityIdAndEntityType(entityId, entityType).stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    public Map<UUID, List<AttachmentResponse>> getAttachmentsForEntities(List<UUID> entityIds, EntityType entityType) {
+        List<Attachment> attachments = attachmentRepository.findByEntityIdInAndEntityType(entityIds, entityType);
+
+        return attachments.stream()
+                .collect(Collectors.groupingBy(
+                        Attachment::getEntityId,
+                        Collectors.mapping(this::mapToResponse, Collectors.toList())
+                ));
     }
 
     @Transactional

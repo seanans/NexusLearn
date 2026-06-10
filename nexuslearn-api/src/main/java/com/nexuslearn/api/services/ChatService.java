@@ -1,9 +1,6 @@
 package com.nexuslearn.api.services;
 
-import com.nexuslearn.api.dtos.AttachmentCreateRequest;
-import com.nexuslearn.api.dtos.ChatMessageRequest;
-import com.nexuslearn.api.dtos.ChatMessageResponse;
-import com.nexuslearn.api.dtos.PendingAttachmentDto;
+import com.nexuslearn.api.dtos.*;
 import com.nexuslearn.api.exceptions.AppException;
 import com.nexuslearn.api.models.ChatMessage;
 import com.nexuslearn.api.models.Course;
@@ -15,12 +12,17 @@ import com.nexuslearn.api.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -33,8 +35,45 @@ public class ChatService {
 
     public Slice<ChatMessageResponse> getCourseChatHistory(UUID courseId, User user, Pageable pageable) {
         securityValidator.validateAccess(courseId, user, false);
+
         Slice<ChatMessage> messages = chatMessageRepository.findRecentMessagesByCourse(courseId, pageable);
-        return messages.map(msg -> mapToResponse(msg, user));
+
+        if (messages.isEmpty()) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, false);
+        }
+
+        List<UUID> messageIds = messages.getContent().stream().map(ChatMessage::getId).toList();
+
+        Map<UUID, List<AttachmentResponse>> attachmentsMap = attachmentService.getAttachmentsForEntities(messageIds, EntityType.MESSAGE);
+
+        return messages.map(msg -> {
+            List<AttachmentResponse> msgAttachments = attachmentsMap.getOrDefault(msg.getId(), Collections.emptyList());
+            return mapToResponse(msg, msgAttachments);
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatInboxItemDto> getChatInbox(User user) {
+        List<Object[]> rawInboxData = courseRepository.findChatInboxDataByUserId(user.getId());
+
+        return rawInboxData.stream().map(row -> {
+            UUID courseId = (UUID) row[0];
+            String courseName = (String) row[1];
+            String rawContent = (String) row[2];
+            LocalDateTime timestamp = (LocalDateTime) row[3];
+
+            String snippet = rawContent == null ? "No messages yet" : rawContent;
+            if (snippet.length() > 40) {
+                snippet = snippet.substring(0, 37) + "...";
+            }
+
+            return ChatInboxItemDto.builder()
+                    .courseId(courseId)
+                    .courseName(courseName)
+                    .latestMessageSnippet(snippet)
+                    .latestMessageTimestamp(timestamp)
+                    .build();
+        }).toList();
     }
 
     @Transactional
@@ -47,11 +86,7 @@ public class ChatService {
 
         String messageContent = (request.getContent() == null) ? "" : request.getContent();
 
-        ChatMessage message = ChatMessage.builder()
-                .course(course)
-                .sender(sender)
-                .content(messageContent)
-                .build();
+        ChatMessage message = ChatMessage.builder().course(course).sender(sender).content(messageContent).build();
 
         message = chatMessageRepository.save(message);
 
@@ -68,7 +103,8 @@ public class ChatService {
             }
         }
 
-        return mapToResponse(message, sender);
+        List<AttachmentResponse> attachments = attachmentService.getAttachmentsForEntity(message.getId(), EntityType.MESSAGE, sender);
+        return mapToResponse(message, attachments);
     }
 
     private void validateMessagePayload(ChatMessageRequest request) {
@@ -94,20 +130,9 @@ public class ChatService {
         return sender;
     }
 
-    private ChatMessageResponse mapToResponse(ChatMessage message, User user) {
-        boolean isEdited = message.getUpdatedAt() != null &&
-                message.getUpdatedAt().isAfter(message.getCreatedAt());
+    private ChatMessageResponse mapToResponse(ChatMessage message, List<AttachmentResponse> attachments) {
+        boolean isEdited = message.getUpdatedAt() != null && message.getUpdatedAt().isAfter(message.getCreatedAt());
 
-        return ChatMessageResponse.builder()
-                .id(message.getId())
-                .courseId(message.getCourse().getId())
-                .senderId(message.getSender().getId())
-                .senderName(message.getSender().getFirstName() + " " + message.getSender().getLastName())
-                .content(message.getContent())
-                .createdAt(message.getCreatedAt())
-                .updatedAt(message.getUpdatedAt())
-                .isEdited(isEdited)
-                .attachments(attachmentService.getAttachmentsForEntity(message.getId(), EntityType.MESSAGE, user))
-                .build();
+        return ChatMessageResponse.builder().id(message.getId()).courseId(message.getCourse().getId()).senderId(message.getSender().getId()).senderName(message.getSender().getFirstName() + " " + message.getSender().getLastName()).content(message.getContent()).createdAt(message.getCreatedAt()).updatedAt(message.getUpdatedAt()).isEdited(isEdited).attachments(attachments).build();
     }
 }
