@@ -54,14 +54,20 @@ export class ChatConnectionService implements OnDestroy {
     this.rxStomp.activate();
   }
 
-  public watchCourseChat(courseId: string) {
-    return this.rxStomp.watch(`/topic/course/${courseId}`);
+  public watchChannel(channelId: string) {
+    return this.rxStomp.watch(`/topic/channels/${channelId}`);
   }
 
-  public sendMessage(courseId: string, payload: any) {
+  public sendMessage(channelId: string, payload: any) {
     this.rxStomp.publish({
-      destination: `/app/chat/${courseId}`,
+      destination: `/app/chat/channels/${channelId}`,
       body: JSON.stringify(payload)
+    });
+  }
+
+  public markAsRead(channelId: string) {
+    this.http.post(`/api/chat/channels/${channelId}/read`, {}).subscribe({
+      error: err => console.error('Failed to mark channel as read', err)
     });
   }
 

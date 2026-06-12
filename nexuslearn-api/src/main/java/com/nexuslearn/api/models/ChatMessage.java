@@ -12,8 +12,8 @@ import lombok.*;
 @Builder
 public class ChatMessage extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
+    @JoinColumn(name = "channel_id", nullable = false)
+    private Channel channel;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)

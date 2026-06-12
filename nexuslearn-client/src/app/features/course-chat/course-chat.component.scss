@@ -1,406 +1,144 @@
+/* Ensure outer bounds */
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  width: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* --- Chat Container (Mobile First) --- */
 .chat-container {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   background-color: #ffffff;
-  /* NO borders or max-heights on mobile! */
+  flex: 1;
 }
 
-/* --- Clean Native Header --- */
+.pinned-link { font-size: 12px; color: #2563eb; display: flex; align-items: center; gap: 4px; padding-top: 4px; svg { width: 14px; height: 14px; } }
+
 .chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #eaeaea;
-
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .back-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      border: none;
-      padding: 8px;
-      margin-left: -8px; /* Pulls it flush with the left edge */
-      color: #111827;
-      cursor: pointer;
-      border-radius: 50%;
-      transition: background-color 0.15s;
-
-      svg { width: 22px; height: 22px; }
-      &:active { background-color: #f3f4f6; }
-    }
-
-    .course-title {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: #111827;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
-
-  .status-indicator {
-    width: 8px;
-    height: 8px;
-    background-color: #10b981; /* Green */
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background-color: #ffffff; border-bottom: 1px solid #eaeaea;
+  .header-left { display: flex; align-items: center; gap: 12px;
+    .back-btn { display: none; align-items: center; justify-content: center; background: transparent; border: none; padding: 8px; margin-left: -8px; color: #6b7280; cursor: pointer; border-radius: 8px; &:hover { background-color: #f3f4f6; color: #111827; } svg { width: 20px; height: 20px; } }
+    .channel-title { font-size: 16px; font-weight: 600; color: #111827; margin: 0; }
   }
 }
 
-/* --- Hide Back Button on Desktop --- */
-@media (min-width: 768px) {
-  .chat-header .back-btn { display: none; }
-}
+@media (max-width: 768px) { .chat-header .header-left .back-btn { display: flex; } }
 
 .messages-viewport {
   flex: 1;
   width: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 0;
+  background-color: #fafafa;
+  box-sizing: border-box;
 
-  /* Custom Scrollbar for sleek UI */
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
-    border-radius: 4px;
-  }
+  display: flex;
+  flex-direction: column-reverse;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
 }
 
-/* --- Message Alignment & Layout --- */
+/* PADDING FIX FOR AVATARS AND LINES */
 .message-row {
   display: flex;
-  gap: 10px;
-  padding: 8px 20px;
-  align-items: flex-end; /* Avatar stays at the bottom */
-
-  &.my-message {
-    flex-direction: row-reverse;
-
-    .message-container {
-      /* THIS fixes the huge gap! Forces bubbles to hug the right avatar */
-      align-items: flex-end;
-    }
-
-    .message-meta {
-      flex-direction: row-reverse;
-    }
-
-    .chat-bubble {
-      background-color: #3b82f6;
-      color: #ffffff;
-      border-radius: 16px 16px 4px 16px; /* Native right-tail effect */
-    }
-  }
-}
-
-.message-container {
-  display: flex;
-  flex-direction: column;
-  max-width: 70%;
-  align-items: flex-start; /* Default left align */
-  gap: 4px; /* Tightens the gap between an attachment and text */
-}
-
-.message-meta {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-  margin-bottom: 2px;
-  padding: 0 4px;
-
-  .sender-name { font-size: 12px; font-weight: 600; color: #4b5563; }
-  .timestamp { font-size: 11px; color: #9ca3af; }
-}
-
-/* --- Input Area Fixes --- */
-.input-area {
-  padding: 16px 24px;
-  background-color: #ffffff;
-  border-top: 1px solid #eaeaea;
-
-  .input-wrapper {
-    display: flex;
-    align-items: center; /* Dead center alignment */
-    background-color: #f3f4f6;
-    border-radius: 24px;
-    padding: 6px 12px;
-    gap: 12px;
-    border: 1px solid transparent;
-    transition: border-color 0.2s ease;
-
-    &:focus-within {
-      border-color: #d1d5db;
-      background-color: #ffffff;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-
-    textarea {
-      flex: 1;
-      border: none;
-      background: transparent;
-      resize: none;
-      outline: none;
-      height: 20px; /* Lock to exactly one line */
-      line-height: 20px;
-      padding: 6px 0; /* 6 + 20 + 6 = 32px total box height */
-      margin: 0;
-      font-family: inherit;
-      font-size: 14px;
-      color: #111827;
-      overflow: hidden;
-
-      &::placeholder {
-        color: #9ca3af;
-      }
-    }
-  }
-}
-
-/* --- The Chat Bubble --- */
-.chat-bubble {
-  background-color: #f3f4f6; /* Gray for other people's messages */
-  color: #111827;
-  padding: 10px 14px;
-  /* Native chat tail effect */
-  border-radius: 16px 16px 16px 4px;
-  width: fit-content;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-
-  .text {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.5;
-    word-break: break-word;
-  }
-}
-
-/* --- Clean File Cards --- */
-.attachment-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.file-card {
-  display: flex;
-  align-items: center;
+  margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
   gap: 12px;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px 12px;
-  text-decoration: none;
-  width: 250px; /* Fixed width so it doesn't span the whole screen */
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-
-  &:hover {
-    border-color: #3b82f6;
-    background-color: #f8fafc;
-  }
-
-  .file-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #eff6ff;
-    color: #3b82f6;
-    padding: 8px;
-    border-radius: 6px;
-
-    svg { width: 20px; height: 20px; }
-  }
-
-  .file-details {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-
-    .file-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: #1f2937;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .file-type {
-      font-size: 11px;
-      color: #6b7280;
-    }
-  }
+  padding: 0 16px; /* Explicit gap from left line/edge */
 }
 
-/* --- Attach & Send Buttons --- */
-.attach-btn, .send-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  padding: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  &:hover:not(:disabled) {
-    background-color: #e5e7eb;
-    color: #111827;
-  }
-
-  /* Fix for Issue #9: Proper Disabled State */
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
+.my-message {
+  flex-direction: row-reverse;
+  .message-container { align-items: flex-end; }
+  .chat-bubble { background-color: #0f172a; color: white; border-bottom-right-radius: 4px; border-bottom-left-radius: 16px;}
 }
 
-/* Make Send Button visually distinct */
-.send-btn {
-  color: #3b82f6;
-  &:hover:not(:disabled) {
-    background-color: #dbeafe;
-    color: #1d4ed8;
-  }
-}
-
-/* --- Staged Attachments (Clean Format) --- */
-.staged-files {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-
-  .staged-pill {
-    display: inline-flex;
-    align-items: center;
-    background-color: #e0e7ff; /* Soft blue */
-    border: 1px solid #bfdbfe;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 13px;
-    color: #1d4ed8;
-    font-weight: 500;
-
-    .remove-btn {
-      background: none;
-      border: none;
-      color: #60a5fa;
-      cursor: pointer;
-      font-size: 16px;
-      margin-left: 8px;
-      display: flex;
-      align-items: center;
-      padding: 0;
-
-      &:hover {
-        color: #ef4444;
-      }
-    }
-  }
+.message-row:not(.my-message) .message-container {
+  align-items: flex-start;
 }
 
 .avatar-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: #3b82f6;
-  color: white;
+  width: 36px; height: 36px; border-radius: 50%;
+  background-color: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; flex-shrink: 0; text-transform: uppercase;
+}
+
+.my-message .avatar-circle { background-color: #6b7280; }
+
+.message-container { display: flex; flex-direction: column; max-width: 75%; gap: 4px; }
+
+.message-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+
+.sender-name { font-size: 13px; font-weight: 600; color: #374151; }
+
+.timestamp { font-size: 11px; color: #9ca3af; }
+
+.bubble-group-wrapper { display: flex; flex-direction: column; gap: 4px; }
+
+.chat-bubble {
+  background-color: #f1f5f9; color: #1e293b; padding: 10px 14px; border-radius: 16px; border-bottom-left-radius: 4px; font-size: 14px; line-height: 1.5; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  .text { margin: 0; white-space: pre-wrap; }
+}
+
+/* File Attachments CSS */
+.attachment-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.file-card { display: flex; align-items: center; background: white; border: 1px solid #eaeaea; border-radius: 8px; padding: 6px 12px 6px 6px; gap: 10px; text-decoration: none; color: inherit; transition: border-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); &:hover { border-color: #d1d5db; } }
+.file-thumb-container { position: relative; width: 36px; height: 36px; flex-shrink: 0; border-radius: 6px; overflow: hidden; background-color: #f3f4f6; .file-thumb { width: 100%; height: 100%; object-fit: cover; } .play-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.35); display: flex; align-items: center; justify-content: center; color: white; svg { width: 18px; height: 18px; margin-left: 2px; } } }
+.file-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 6px; color: #6b7280; svg { width: 20px; height: 20px; } }
+.file-details { display: flex; flex-direction: column; min-width: 0; .file-name { font-size: 13px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; } .file-type { font-size: 11px; color: #6b7280; text-transform: uppercase; } }
+
+/* Input Area CSS */
+.input-area { padding: 16px 20px; background-color: #ffffff; border-top: 1px solid #eaeaea; }
+
+.input-wrapper {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-  flex-shrink: 0;
-  text-transform: uppercase;
-}
+  align-items: flex-end; /* Keeps buttons at bottom when textarea grows */
+  gap: 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 8px 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 
-/* Make my avatar gray since my bubble is blue */
-.my-message .avatar-circle {
-  background-color: #6b7280;
-}
+  &:focus-within { border-color: #d1d5db; background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 
-
-/* --- File Thumbnail Previews --- */
-.file-thumb-container {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: 6px;
-  overflow: hidden;
-  background-color: #f3f4f6;
-
-  .file-thumb {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .play-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-
-    svg {
-      width: 18px;
-      height: 18px;
-      margin-left: 2px; /* Centers the play triangle visually */
-    }
+  textarea {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 6px 4px; /* Tweak padding to align with icons */
+    font-family: inherit;
+    font-size: 14px;
+    color: #111827;
+    resize: none; /* Stops manual drag resizing */
+    max-height: 120px;
+    line-height: 1.4;
+    outline: none;
+    overflow-y: auto;
+    &::placeholder { color: #9ca3af; }
   }
 }
 
-.attach-btn, .send-btn, textarea, button {
-  &:focus, &:focus-visible, &:active {
-    outline: none !important;
-    box-shadow: none !important;
-  }
-}
-.attach-btn:focus-visible {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4) !important;
-}
-.send-btn:focus-visible {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4) !important;
+.attach-btn, .send-btn {
+  display: flex; align-items: center; justify-content: center;
+  height: 32px; width: 32px; /* Fixed button sizes */
+  border: none; border-radius: 50%; cursor: pointer; flex-shrink: 0; transition: all 0.2s;
+  margin-bottom: 2px; /* Aligns visually with the 1-line textarea */
 }
 
-/* Bundles attachment cards and text cleanly together */
-.bubble-group-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: fit-content;
-}
-.my-message .bubble-group-wrapper {
-  align-items: flex-end;
-}
+.attach-btn { background: transparent; color: #6b7280; &:hover:not(:disabled) { background-color: #e5e7eb; color: #374151; } &:disabled { opacity: 0.5; cursor: not-allowed; } svg { width: 20px; height: 20px; } }
+.send-btn { background: #111827; color: #ffffff; &:hover:not(:disabled) { background: #374151; transform: scale(1.05); } &:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; transform: none; } svg { width: 16px; height: 16px; margin: 0; } }.staged-files { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 0 4px; }
+.staged-pill { display: flex; align-items: center; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 16px; padding: 4px 12px; gap: 8px; font-size: 13px; color: #374151; .file-name { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .remove-btn { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; border: none; background: #e5e7eb; color: #4b5563; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; &:hover { background: #d1d5db; color: #111827; } } }
+.uploading-indicator { font-size: 12px; color: #6b7280; display: flex; align-items: center; font-style: italic; padding: 4px 8px; }
+.input-wrapper { display: flex; align-items: flex-end; gap: 12px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px; padding: 8px 12px; transition: border-color 0.2s, box-shadow 0.2s; &:focus-within { border-color: #d1d5db; background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); } textarea { flex: 1; border: none; background: transparent; padding: 8px 4px; font-family: inherit; font-size: 14px; color: #111827; resize: none; min-height: 20px; max-height: 120px; line-height: 1.4; outline: none; &::placeholder { color: #9ca3af; } } }
+.attach-btn, .send-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: none; border-radius: 50%; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+.attach-btn { background: transparent; color: #6b7280; &:hover:not(:disabled) { background-color: #e5e7eb; color: #374151; } &:disabled { opacity: 0.5; cursor: not-allowed; } svg { width: 20px; height: 20px; } }
+.send-btn { background: #111827; color: #ffffff; &:hover:not(:disabled) { background: #374151; transform: scale(1.05); } &:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; transform: none; } svg { width: 18px; height: 18px; margin-left: 2px; } }
+
+.read-only-banner { padding: 16px; background: #f8fafc; border-top: 1px solid #eaeaea; text-align: center; color: #64748b; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; svg { width: 16px; height: 16px; } }

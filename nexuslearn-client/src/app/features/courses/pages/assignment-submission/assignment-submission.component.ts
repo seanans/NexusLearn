@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, inject, OnInit} from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe, DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,7 +6,8 @@ import { Observable, combineLatest, switchMap, filter, map, BehaviorSubject, of,
 import { CourseService } from '../../services/course.service';
 import { AssignmentResponse, CourseRole, SubmissionResponse, PendingAttachmentDto, EntityType } from '../../models/course.models';
 import { AttachmentGalleryComponent } from '../../../../shared/components/attachment-gallery/attachment-gallery.component';
-import {FileStorageService} from '../../services/file-storage.service';
+import { FileStorageService } from '../../services/file-storage.service';
+import { MiniChatComponent } from '../../../../shared/components/mini-chat/mini-chat.component';
 
 interface AssignmentViewData {
   assignment: AssignmentResponse;
@@ -18,7 +19,7 @@ interface AssignmentViewData {
 @Component({
   selector: 'app-assignment-submission',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule, NgClass, AttachmentGalleryComponent],
+  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule, NgClass, AttachmentGalleryComponent, MiniChatComponent],
   templateUrl: './assignment-submission.component.html',
   styleUrl: './assignment-submission.component.scss'
 })
@@ -31,6 +32,10 @@ export class AssignmentSubmissionComponent implements OnInit {
   viewData$!: Observable<AssignmentViewData | null>;
   CourseRole = CourseRole;
   EntityType = EntityType;
+
+  activeTab: 'details' | 'submissions' = 'details';
+  searchQuery: string = '';
+  selectedSubmissionId: string | null = null;
 
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
   isResubmitting: boolean = false;
@@ -53,18 +58,8 @@ export class AssignmentSubmissionComponent implements OnInit {
         const assignmentId = params.get('assignmentId')!;
 
         return combineLatest([
-          this.courseService.getAssignmentById(courseId, assignmentId).pipe(
-            catchError(err => {
-              console.error("Assignment load failed", err);
-              return of(null);
-            })
-          ),
-          this.courseService.getSubmissions(assignmentId).pipe(
-            catchError(err => {
-              console.warn("Submissions load failed or restricted. Defaulting to empty array.");
-              return of([]);
-            })
-          )
+          this.courseService.getAssignmentById(courseId, assignmentId).pipe(catchError(() => of(null))),
+          this.courseService.getSubmissions(assignmentId).pipe(catchError(() => of([])))
         ]).pipe(
           map(([assignment, submissions]) => {
             if (!assignment) return null;
@@ -86,6 +81,17 @@ export class AssignmentSubmissionComponent implements OnInit {
         );
       })
     );
+  }
+
+  getFilteredSubmissions(submissions: SubmissionResponse[]): SubmissionResponse[] {
+    if (!submissions) return [];
+    if (!this.searchQuery.trim()) return submissions;
+    const q = this.searchQuery.toLowerCase();
+    return submissions.filter(s => s.studentName?.toLowerCase().includes(q));
+  }
+
+  selectSubmission(id: string) {
+    this.selectedSubmissionId = id;
   }
 
   onFileSelectedForSubmission(event: Event): void {
@@ -116,41 +122,20 @@ export class AssignmentSubmissionComponent implements OnInit {
   }
 
   submitWork(assignmentId: string): void {
-    if (this.isUploadingFile) {
-      alert("Please wait for the file to finish uploading.");
-      return;
-    }
-
-    if (!this.studentAnswer.trim() && this.stagedFiles.length === 0) {
-      alert("You must provide text or attach a file to submit.");
-      return;
-    }
-
-    if (this.isResubmitting) {
-      const confirmed = window.confirm(
-        "WARNING: Resubmitting will permanently clear your current grade and teacher feedback.\n\nAre you sure you want to proceed?"
-      );
-      if (!confirmed) return;
-    }
+    if (this.isUploadingFile) { alert("Please wait for the file to finish uploading."); return; }
+    if (!this.studentAnswer.trim() && this.stagedFiles.length === 0) { alert("You must provide text or attach a file to submit."); return; }
+    if (this.isResubmitting && !window.confirm("WARNING: Resubmitting will clear your current grade and feedback.\nProceed?")) return;
 
     this.courseService.submitAssignment(assignmentId, this.studentAnswer, this.stagedFiles).subscribe({
       next: () => {
-        this.studentAnswer = '';
-        this.stagedFiles = [];
-        this.isResubmitting = false;
-        this.refreshTrigger$.next();
+        this.studentAnswer = ''; this.stagedFiles = []; this.isResubmitting = false; this.refreshTrigger$.next();
       }
     });
   }
 
   submitGrade(submissionId: string): void {
-    const score = this.gradingScores[submissionId];
-    const feedback = this.gradingFeedbacks[submissionId];
-
-    this.courseService.gradeSubmission(submissionId, score, feedback).subscribe({
-      next: () => {
-        this.refreshTrigger$.next();
-      }
+    this.courseService.gradeSubmission(submissionId, this.gradingScores[submissionId], this.gradingFeedbacks[submissionId]).subscribe({
+      next: () => this.refreshTrigger$.next()
     });
   }
 

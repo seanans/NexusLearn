@@ -69,6 +69,20 @@
   margin-top: 0;
 }
 
+.lesson-chat-section {
+  h3 { font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 16px 0; }
+
+  .mini-chat-wrapper {
+    height: 500px;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+}
+
 .section-divider { border: 0; border-top: 1px solid #eaeaea; margin: 32px 0; }
 .lesson-materials h3 { font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 16px 0; }
 

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import {MessagesHubComponent} from './features/messages-hub/messages-hub.component';
-import {CourseChatComponent} from './features/course-chat/course-chat.component';
+import { MessagesHubComponent } from './features/messages-hub/messages-hub.component';
+import { CourseChatComponent } from './features/course-chat/course-chat.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'courses', pathMatch: 'full' },
@@ -59,7 +59,7 @@ export const routes: Routes = [
     component: MessagesHubComponent,
     children: [
       {
-        path: ':courseId', // Loads into the <router-outlet> inside MessagesHubComponent
+        path: ':channelId',
         component: CourseChatComponent
       }
     ]

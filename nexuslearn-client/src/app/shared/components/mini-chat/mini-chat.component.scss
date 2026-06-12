@@ -1,0 +1,39 @@
+:host { display: block; height: 100%; width: 100%; font-family: 'Inter', sans-serif; }
+.chat-container { display: flex; flex-direction: column; height: 100%; width: 100%; background: #ffffff; flex: 1; }
+
+.messages-viewport {
+  flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden; padding: 20px 0; background-color: #fafafa; box-sizing: border-box;
+  display: flex; flex-direction: column-reverse;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
+}
+
+.message-row { display: flex; margin-bottom: 24px; width: 100%; box-sizing: border-box; gap: 12px; padding: 0 24px; }
+.my-message { flex-direction: row-reverse; .message-container { align-items: flex-end; } .chat-bubble { background-color: #0f172a; color: white; border-bottom-right-radius: 4px; border-bottom-left-radius: 16px;} }
+.message-row:not(.my-message) .message-container { align-items: flex-start; }
+
+.avatar-circle { width: 32px; height: 32px; border-radius: 50%; background-color: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; text-transform: uppercase; }
+.my-message .avatar-circle { background-color: #6b7280; }
+
+.message-container { display: flex; flex-direction: column; max-width: 85%; gap: 4px; }
+.message-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+.sender-name { font-size: 12px; font-weight: 600; color: #374151; }
+.timestamp { font-size: 10px; color: #9ca3af; }
+.bubble-group-wrapper { display: flex; flex-direction: column; gap: 4px; }
+.chat-bubble { background-color: #f1f5f9; color: #1e293b; padding: 10px 14px; border-radius: 16px; border-bottom-left-radius: 4px; font-size: 14px; line-height: 1.5; word-break: break-word; .text { margin: 0; white-space: pre-wrap; } }
+
+/* Attachments */
+.attachment-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.file-card { display: flex; align-items: center; background: white; border: 1px solid #eaeaea; border-radius: 8px; padding: 6px 12px 6px 6px; gap: 10px; text-decoration: none; color: inherit; transition: border-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); &:hover { border-color: #d1d5db; } }
+.file-thumb-container { position: relative; width: 36px; height: 36px; flex-shrink: 0; border-radius: 6px; overflow: hidden; background-color: #f3f4f6; .file-thumb { width: 100%; height: 100%; object-fit: cover; } }
+.file-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 6px; color: #6b7280; svg { width: 20px; height: 20px; } }
+.file-details { display: flex; flex-direction: column; min-width: 0; .file-name { font-size: 13px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; } .file-type { font-size: 11px; color: #6b7280; text-transform: uppercase; } }
+
+/* Inputs */
+.input-area { padding: 16px; background-color: #ffffff; border-top: 1px solid #eaeaea; }
+.input-wrapper { display: flex; align-items: flex-end; gap: 10px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 24px; padding: 8px 16px; transition: border-color 0.2s; &:focus-within { border-color: #d1d5db; background-color: #ffffff; } textarea { flex: 1; border: none; background: transparent; padding: 0; margin: 0; font-family: inherit; font-size: 14px; color: #111827; resize: none; height: 20px; max-height: 120px; line-height: 20px; outline: none; overflow-y: hidden; &::placeholder { color: #9ca3af; line-height: 20px; } } }
+.attach-btn, .send-btn { display: flex; align-items: center; justify-content: center; height: 20px; width: 20px; border: none; background: transparent; cursor: pointer; flex-shrink: 0; padding: 0; }
+.attach-btn { color: #6b7280; &:hover:not(:disabled) { color: #374151; } &:disabled { opacity: 0.5; } svg { width: 20px; height: 20px; } }
+.send-btn { color: #0f172a; &:hover:not(:disabled) { color: #3b82f6; } &:disabled { color: #d1d5db; } svg { width: 16px; height: 16px; margin: 0; } }
+.staged-files { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.staged-pill { display: flex; align-items: center; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 16px; padding: 4px 12px; gap: 8px; font-size: 12px; color: #374151; .remove-btn { width: 16px; height: 16px; border-radius: 50%; border: none; background: #e5e7eb; color: #4b5563; cursor: pointer; &:hover { background: #d1d5db; } } }

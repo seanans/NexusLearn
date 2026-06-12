@@ -29,10 +29,17 @@
         @if (view.lesson.attachments && view.lesson.attachments.length > 0) {
           <hr class="section-divider" />
           <section class="lesson-materials">
-            <h3>Course Materials</h3>
-            <app-attachment-gallery [attachments]="view.lesson.attachments" [allowDelete]="false"></app-attachment-gallery>
+            <h3>Attachments</h3> <app-attachment-gallery [attachments]="view.lesson.attachments" [allowDelete]="false"></app-attachment-gallery>
           </section>
         }
+
+        <hr class="section-divider" />
+        <section class="lesson-chat-section">
+          <h3>Lesson Discussion</h3>
+          <div class="mini-chat-wrapper">
+            <app-mini-chat [referenceId]="view.lesson.id" [courseId]="view.courseId" channelType="LESSON"></app-mini-chat>
+          </div>
+        </section>
       </main>
     </div>
   } @else {

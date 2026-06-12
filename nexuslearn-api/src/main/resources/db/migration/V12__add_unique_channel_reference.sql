@@ -1,0 +1,1 @@
+ALTER TABLE channels ADD CONSTRAINT uk_channel_reference UNIQUE (reference_id);

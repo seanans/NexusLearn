@@ -11,7 +11,7 @@ import java.util.UUID;
 @Builder
 public class ChatMessageResponse {
     private UUID id;
-    private UUID courseId;
+    private UUID channelId;
     private String senderName;
     private UUID senderId;
     private String content;

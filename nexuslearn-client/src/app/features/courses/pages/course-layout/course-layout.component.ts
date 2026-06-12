@@ -1,14 +1,14 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterOutlet, RouterLink } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
+import { ActivatedRoute, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { Observable, switchMap } from 'rxjs';
 import { CourseService } from '../../services/course.service';
 import { CourseResponse, CourseRole } from '../../models/course.models';
+import {AsyncPipe} from '@angular/common';
 
 @Component({
   selector: 'app-course-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, AsyncPipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AsyncPipe],
   templateUrl: './course-layout.component.html',
   styleUrls: ['./course-layout.component.scss']
 })

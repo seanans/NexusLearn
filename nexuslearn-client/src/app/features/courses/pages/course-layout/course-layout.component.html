@@ -17,6 +17,9 @@
     <nav class="course-tabs">
       <a [routerLink]="['/courses', course.id, 'syllabus']" routerLinkActive="active">Syllabus</a>
       <a [routerLink]="['/courses', course.id, 'people']" routerLinkActive="active">People</a>
+
+      <a routerLink="/messages" [state]="{ expandCourseId: course.id }">Chat</a>
+
       @if (course.currentUserRole === CourseRole.TEACHER) {
         <a [routerLink]="['/courses', course.id, 'settings']" routerLinkActive="active">Settings</a>
       }

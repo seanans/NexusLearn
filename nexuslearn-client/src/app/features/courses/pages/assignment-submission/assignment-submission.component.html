@@ -13,7 +13,6 @@
             <span class="badge-draft">Draft (Hidden)</span>
           }
         </h1>
-
         <div class="assignment-meta">
           <span class="meta-badge">Max Score: {{ data.assignment.maxScore }} pts</span>
           <span class="meta-badge">Due: {{ data.assignment.dueDate | date:'medium' }}</span>
@@ -22,198 +21,248 @@
 
       @if (data.role === CourseRole.TEACHER || data.role === CourseRole.ASSISTANT) {
         <button class="btn-edit" [routerLink]="['/courses', data.courseId, 'assignments', data.assignment.id, 'edit']">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"
+               style="margin-right: 6px;">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
           Edit
         </button>
       }
     </header>
 
+    <nav class="local-tabs">
+      <button [class.active]="activeTab === 'details'" (click)="activeTab = 'details'">Details & Q&A</button>
+      <button [class.active]="activeTab === 'submissions'" (click)="activeTab = 'submissions'">
+        {{ data.role === CourseRole.STUDENT ? 'My Submission' : 'Student Submissions' }}
+      </button>
+    </nav>
+
     <main class="workspace-body">
-      <div class="assignment-description" style="white-space: pre-wrap;">{{ data.assignment.description }}</div>
 
-      @if (data.assignment.attachments && data.assignment.attachments.length > 0) {
-        <div class="assignment-materials">
-          <h3>Reference Materials</h3>
-          <app-attachment-gallery
-            [attachments]="data.assignment.attachments"
-            [allowDelete]="false">
-          </app-attachment-gallery>
-        </div>
-      }
+      @if (activeTab === 'details') {
+        <div class="assignment-description" style="white-space: pre-wrap;">{{ data.assignment.description }}</div>
 
-      <hr class="section-divider">
+        @if (data.assignment.attachments && data.assignment.attachments.length > 0) {
+          <div class="assignment-materials">
+            <h3>Attachments</h3>
+            <app-attachment-gallery [attachments]="data.assignment.attachments"
+                                    [allowDelete]="false"></app-attachment-gallery>
+          </div>
+        }
 
-      @if (data.role === CourseRole.STUDENT) {
-        <section class="student-zone">
-          <h3 class="zone-title">Your Submission</h3>
+        <hr class="section-divider">
 
-          @if (data.submissions && data.submissions.length > 0 && !isResubmitting) {
-            @let sub = data.submissions[0];
-            <div class="submission-receipt">
-              <div class="receipt-header">
-                <span>Submitted: {{ sub.submittedAt | date:'medium' }}</span>
-                <span class="status-indicator" [ngClass]="{'late': sub.late, 'on-time': !sub.late}">
-                  {{ sub.late ? 'Late Submission' : 'On Time' }}
-                </span>
-              </div>
-
-              <div class="submitted-body">
-                <h5>Your Response:</h5>
-                <p class="raw-response">"{{ sub.submissionText }}"</p>
-
-                @if (sub.attachments && sub.attachments.length > 0) {
-                  <div style="margin-top: 1rem;">
-                    <h5>Attached Files:</h5>
-                    <app-attachment-gallery
-                      [attachments]="sub.attachments"
-                      [allowDelete]="false">
-                    </app-attachment-gallery>
-                  </div>
-                }
-              </div>
-
-              @if (sub.score !== null) {
-                <div class="evaluation-results">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
-                    <h4>Grade Received: <span class="assigned-score">{{ sub.score }}</span> / {{ data.assignment.maxScore }}</h4>
-                    @if (sub.gradedAt) {
-                      <span style="font-size: 12px; color: #b45309; font-weight: 600; background: rgba(217, 119, 6, 0.1); padding: 4px 8px; border-radius: 4px;">
-                        Evaluated: {{ sub.gradedAt | date:'medium' }}
-                      </span>
-                    }
-                  </div>
-                  <p class="feedback-text" style="margin-top: 8px;"><strong>Teacher Feedback:</strong> {{ sub.feedback || 'No evaluation text left.' }}</p>
-                </div>
-              } @else {
-                <div class="pending-review">
-                  Waiting for an instructor to review and score this work.
-                </div>
-              }
-
-              <div class="resubmit-action-wrapper">
-                <button class="btn-secondary-link" (click)="enableResubmission(sub.submissionText)">
-                  Resubmit Enhanced Solution
-                </button>
-              </div>
-            </div>
-          } @else {
-            <div class="submission-form">
-              <label for="submissionText">Type your solution statement below:</label>
-              <textarea
-                id="submissionText"
-                [(ngModel)]="studentAnswer"
-                placeholder="Write your answer details..."
-                rows="8">
-              </textarea>
-
-              <div class="staging-area">
-                <h4>Attach Files</h4>
-
-                @if (stagedFiles.length > 0) {
-                  <ul class="staged-files-list">
-                    @for (file of stagedFiles; track file.fileName; let i = $index) {
-                      <li>
-                        <div><span class="file-name">{{ file.fileName }}</span></div>
-                        <button class="btn-remove-staged" (click)="removeStagedFile(i)" title="Remove file">✕</button>
-                      </li>
-                    }
-                  </ul>
-                }
-
-                <div class="upload-controls">
-                  <label class="custom-file-upload" [class.disabled]="isUploadingFile">
-                    <input
-                      type="file"
-                      (change)="onFileSelectedForSubmission($event)"
-                      [disabled]="isUploadingFile"
-                      accept=".pdf,.doc,.docx,.png,.jpg,.mp4,.zip"
-                    />
-                    {{ isUploadingFile ? 'Uploading...' : '+ Add File' }}
-                  </label>
-                </div>
-              </div>
-
-              <div class="form-actions">
-                @if (isResubmitting) {
-                  <button class="btn-cancel" (click)="isResubmitting = false">Cancel</button>
-                }
-                <button
-                  class="btn-submit"
-                  (click)="submitWork(data.assignment.id)"
-                  [disabled]="isUploadingFile || (!studentAnswer.trim() && stagedFiles.length === 0)">
-                  {{ isResubmitting ? 'Submit Overwritten Version' : 'Submit Work' }}
-                </button>
-              </div>
-            </div>
-          }
+        <section class="embedded-chat-section">
+          <h3 class="zone-title">Public Q&A</h3>
+          <p class="zone-subtitle">Ask general questions about the assignment here. Everyone in the course can see
+            this.</p>
+          <div class="mini-chat-wrapper">
+            <app-mini-chat [referenceId]="data.assignment.id" [courseId]="data.courseId"
+                           channelType="ASSIGNMENT_PUBLIC"></app-mini-chat>
+          </div>
         </section>
       }
 
-      @if (data.role === CourseRole.TEACHER || data.role === CourseRole.ASSISTANT) {
-        <section class="management-zone">
-          <h3 class="zone-title">Incoming Submissions ({{ data.submissions ? data.submissions.length : 0 }})</h3>
+      @if (activeTab === 'submissions') {
 
-          <div class="submissions-dashboard-list">
-            @for (sub of data.submissions; track sub.id) {
-              <div class="grading-card" [class.graded]="sub.score !== null">
-                <div class="card-meta">
-                  <span class="student-identifier">Student: <strong>{{ sub.studentName }}</strong></span>
-                  <span class="timeline" [class.late-flag]="sub.late">
-                    Submitted: {{ sub.submittedAt | date:'short' }} {{ sub.late ? '(LATE)' : '' }}
-                  </span>
-                </div>
-
-                <div class="student-text-block">
-                  <p>"{{ sub.submissionText }}"</p>
-
-                  @if (sub.attachments && sub.attachments.length > 0) {
-                    <div style="margin-top: 1rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
-                      <strong style="font-size: 0.9rem; color: #475569; display: block; margin-bottom: 0.5rem;">Student Files:</strong>
-                      <app-attachment-gallery
-                        [attachments]="sub.attachments"
-                        [allowDelete]="false">
-                      </app-attachment-gallery>
-                    </div>
-                  }
-                </div>
-
-                <div class="grading-action-panel">
-                  <div class="input-row">
-                    <div class="input-group score-input">
-                      <label>Score (Max {{ data.assignment.maxScore }}):</label>
-                      <input
-                        type="number"
-                        [min]="0"
-                        [max]="data.assignment.maxScore"
-                        [(ngModel)]="gradingScores[sub.id]">
+        @if (data.role === CourseRole.STUDENT) {
+          <section class="student-zone">
+            @if (data.submissions && data.submissions.length > 0 && !isResubmitting) {
+              @if (data.submissions[0]; as sub) {
+                <div class="student-submission-split">
+                  <div class="submission-receipt">
+                    <div class="receipt-header">
+                      <span>Submitted: {{ sub.submittedAt | date:'medium' }}</span>
+                      <span class="status-indicator"
+                            [ngClass]="{'late': sub.late, 'on-time': !sub.late}">{{ sub.late ? 'Late Submission' : 'On Time' }}</span>
                     </div>
 
-                    <div class="input-group feedback-input">
-                      <label>Feedback:</label>
-                      <input
-                        type="text"
-                        placeholder="Type correction suggestions..."
-                        [(ngModel)]="gradingFeedbacks[sub.id]">
+                    <div class="submitted-body">
+                      <h5>Your Response:</h5>
+                      <p class="raw-response">"{{ sub.submissionText }}"</p>
+                      @if (sub.attachments && sub.attachments.length > 0) {
+                        <div style="margin-top: 1rem;">
+                          <h5>Attached Files:</h5>
+                          <app-attachment-gallery [attachments]="sub.attachments"
+                                                  [allowDelete]="false"></app-attachment-gallery>
+                        </div>
+                      }
+                    </div>
+
+                    @if (sub.score !== null) {
+                      <div class="evaluation-results">
+                        <div
+                          style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                          <h4>Grade Received: <span class="assigned-score">{{ sub.score }}</span>
+                            / {{ data.assignment.maxScore }}</h4>
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="pending-review">Waiting for an instructor to review and score this work.</div>
+                    }
+
+                    <div class="resubmit-action-wrapper">
+                      <button class="btn-secondary-link" (click)="enableResubmission(sub.submissionText)">Resubmit
+                        Enhanced Solution
+                      </button>
                     </div>
                   </div>
 
-                  <button class="btn-grade-save" (click)="submitGrade(sub.id)">
-                    {{ sub.score !== null ? 'Update Grade' : 'Save Evaluation' }}
+                  <div class="private-chat-sidebar">
+                    <h4>Private Feedback</h4>
+                    <div class="mini-chat-wrapper">
+                      <app-mini-chat [referenceId]="sub.id" [courseId]="data.courseId"
+                                     channelType="ASSIGNMENT_PRIVATE"></app-mini-chat>
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="submission-form">
+                <label for="submissionText">Type your solution statement below:</label>
+                <textarea id="submissionText" [(ngModel)]="studentAnswer" placeholder="Write your answer details..."
+                          rows="8"></textarea>
+                <div class="staging-area">
+                  <h4>Attach Files</h4>
+                  @if (stagedFiles.length > 0) {
+                    <ul class="staged-files-list">
+                      @for (file of stagedFiles; track file.fileName; let i = $index) {
+                        <li>
+                          <div><span class="file-name">{{ file.fileName }}</span></div>
+                          <button class="btn-remove-staged" (click)="removeStagedFile(i)">✕</button>
+                        </li>
+                      }
+                    </ul>
+                  }
+                  <div class="upload-controls">
+                    <label class="custom-file-upload" [class.disabled]="isUploadingFile">
+                      <input type="file" (change)="onFileSelectedForSubmission($event)" [disabled]="isUploadingFile"
+                             accept=".pdf,.doc,.docx,.png,.jpg,.mp4,.zip"/>
+                      {{ isUploadingFile ? 'Uploading...' : '+ Add File' }}
+                    </label>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  @if (isResubmitting) {
+                    <button class="btn-cancel" (click)="isResubmitting = false">Cancel</button>
+                  }
+                  <button class="btn-submit" (click)="submitWork(data.assignment.id)"
+                          [disabled]="isUploadingFile || (!studentAnswer.trim() && stagedFiles.length === 0)">
+                    {{ isResubmitting ? 'Submit Overwritten Version' : 'Submit Work' }}
                   </button>
                 </div>
               </div>
             }
-            @if (!data.submissions || data.submissions.length === 0) {
-              <div class="dashboard-empty">No student solutions have been submitted yet.</div>
-            }
-          </div>
-        </section>
+          </section>
+        }
+
+        @if (data.role === CourseRole.TEACHER || data.role === CourseRole.ASSISTANT) {
+          <section class="teacher-grading-layout">
+
+            <aside class="roster-sidebar">
+              <div class="search-box">
+                <input type="text" class="form-control" [(ngModel)]="searchQuery" placeholder="Search students...">
+              </div>
+              <div class="roster-list">
+                @for (sub of getFilteredSubmissions(data.submissions); track sub.id) {
+                  <div class="roster-item" [class.selected]="selectedSubmissionId === sub.id"
+                       (click)="selectSubmission(sub.id)">
+                    <div class="roster-name">{{ sub.studentName }}</div>
+                    <div class="roster-meta">
+                      @if (sub.score !== null) {
+                        <span class="badge-status graded">Graded</span>
+                      } @else {
+                        <span class="badge-status pending">Needs Grading</span>
+                      }
+                      @if (sub.late) {
+                        <span class="badge-status late">Late</span>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (getFilteredSubmissions(data.submissions).length === 0) {
+                  <div class="empty-roster">No submissions found.</div>
+                }
+              </div>
+            </aside>
+
+            <main class="grading-main">
+              @if (selectedSubmissionId) {
+                @for (sub of data.submissions; track sub.id) {
+                  @if (sub.id === selectedSubmissionId) {
+
+                    <div class="grading-header">
+                      <h3>{{ sub.studentName }}'s Submission</h3>
+                      <span class="timeline">Submitted: {{ sub.submittedAt | date:'short' }}</span>
+                    </div>
+
+                    <div class="student-text-block">
+                      <p>"{{ sub.submissionText }}"</p>
+                      @if (sub.attachments && sub.attachments.length > 0) {
+                        <div style="margin-top: 1rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
+                          <strong style="font-size: 0.9rem; color: #475569; display: block; margin-bottom: 0.5rem;">Student
+                            Files:</strong>
+                          <app-attachment-gallery [attachments]="sub.attachments"
+                                                  [allowDelete]="false"></app-attachment-gallery>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="grading-action-panel">
+                      <div class="input-row">
+                        <div class="input-group score-input">
+                          <label>Score (Max {{ data.assignment.maxScore }}):</label>
+                          <input type="number" [min]="0" [max]="data.assignment.maxScore"
+                                 [(ngModel)]="gradingScores[sub.id]">
+                        </div>
+                        <div class="input-group">
+                          <label>Evaluation Notes:</label>
+                          <div style="display: flex; gap: 12px; align-items: flex-end;">
+                            <input type="text" placeholder="Official notes..." [(ngModel)]="gradingFeedbacks[sub.id]"
+                                   style="flex: 1;">
+                            <button class="btn-grade-save" (click)="submitGrade(sub.id)">
+                              {{ sub.score !== null ? 'Update Grade' : 'Save Grade' }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="embedded-chat-section" style="margin-top: 24px;">
+                      <h4 style="margin-bottom: 12px; color: #374151;">Private Conversation
+                        with {{ sub.studentName.split(' ')[0] }}</h4>
+                      <div class="mini-chat-wrapper" style="height: 400px;">
+                        <app-mini-chat [referenceId]="sub.id" [courseId]="data.courseId"
+                                       channelType="ASSIGNMENT_PRIVATE"></app-mini-chat>
+                      </div>
+                    </div>
+
+                  }
+                }
+              } @else {
+                <div class="dashboard-empty" style="margin: auto; width: 100%; border: none; background: transparent;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                       style="width: 48px; height: 48px; color: #cbd5e1; margin-bottom: 16px;">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                  Select a student from the roster to view their work, grade it, and chat privately.
+                </div>
+              }
+            </main>
+          </section>
+        }
       }
     </main>
   </div>
 } @else {
   <div class="spinner-loading">
-    <div class="spinner" style="width: 24px; height: 24px; border: 2px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;"></div>
+    <div class="spinner"
+         style="width: 24px; height: 24px; border: 2px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;"></div>
     Loading assignment data...
   </div>
 }

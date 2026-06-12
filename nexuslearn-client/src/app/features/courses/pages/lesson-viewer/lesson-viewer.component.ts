@@ -5,11 +5,12 @@ import { Observable, combineLatest, switchMap, filter, map, BehaviorSubject, of,
 import { CourseService } from '../../services/course.service';
 import { LessonResponse, CourseRole } from '../../models/course.models';
 import { AttachmentGalleryComponent } from '../../../../shared/components/attachment-gallery/attachment-gallery.component';
+import { MiniChatComponent } from '../../../../shared/components/mini-chat/mini-chat.component';
 
 @Component({
   selector: 'app-lesson-viewer',
   standalone: true,
-  imports: [AsyncPipe, RouterLink, AttachmentGalleryComponent],
+  imports: [AsyncPipe, RouterLink, AttachmentGalleryComponent, MiniChatComponent],
   templateUrl: './lesson-viewer.component.html',
   styleUrls: ['./lesson-viewer.component.scss']
 })
